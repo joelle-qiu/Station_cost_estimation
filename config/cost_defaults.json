@@ -1,0 +1,217 @@
+{
+
+  "station_city": "",
+
+  "parking_vehicle_type": "乘用车",
+
+  "parking_slot_size_desc": "",
+
+  "parking_spots": 0,
+
+  "transformer_upgrade_mode": "不增容",
+
+  "transformer_to_farthest_m": 0.0,
+
+  "site_layout": "室外",
+
+  "peak_price": 1.2,
+
+  "valley_price": 0.3,
+
+  "flat_price": 0.7,
+
+  "kva_existing": 0.0,
+
+  "kva_remaining_available": 0.0,
+
+  "power_factor": 0.85,
+
+  "kva_target": 0.0,
+
+  "transformer_unit_price": 400.0,
+
+  "ultra_480_enabled": "否",
+
+  "n_pile_60": 0,
+
+  "price_pile_60_wan": 0.0,
+
+  "n_pile_120": 0,
+
+  "price_pile_120_wan": 0.0,
+
+  "n_ultra_480": 0,
+
+  "price_ultra_480_wan": 40.0,
+
+  "storage_installed": "不安装工商业储能",
+
+  "cycle_strategy": "一充一放",
+
+  "usage": "峰谷套利+充电",
+
+  "storage_sets": 0,
+
+  "storage_kwh_per_set": 262.0,
+
+  "price_storage_per_kwh": 0.65,
+
+  "peak_reduction_kw": 200.0,
+
+  "basic_electricity_yuan_per_kw_month": 35.0,
+
+  "basic_electricity_saved_wan_per_year": 0.0,
+
+  "transformer_avoided_wan": 0.0,
+
+  "transformer_avoided_depreciation_years": 15,
+
+  "cable_len_m": 0.0,
+
+  "parking_cost_per_spot_wan": 1.2,
+
+  "other_construction_wan": 0.0,
+
+  "microgrid_controller_equip_wan": 0.0,
+
+  "microgrid_controller_debug_wan": 0.0,
+
+  "chg_eng_ggd_qty": 1,
+
+  "chg_eng_ggd_unit_yuan": 18000.0,
+
+  "chg_eng_ggd_install_yuan": 1050.0,
+
+  "chg_eng_meter_qty": 1,
+
+  "chg_eng_meter_unit_yuan": 2300.0,
+
+  "chg_eng_meter_install_yuan": 105.0,
+
+  "chg_eng_cable_yjlhv300_len_m": 0.0,
+
+  "chg_eng_cable_yjlhv300_unit_yuan": 115.0,
+
+  "chg_eng_cable_yjlhv240_len_m": 0.0,
+
+  "chg_eng_cable_yjlhv240_unit_yuan": 105.0,
+
+  "chg_eng_cable_yjv240_len_m": 0.0,
+
+  "chg_eng_cable_yjv240_unit_yuan": 1030.0,
+
+  "chg_eng_cable_yjv70_len_m": 0.0,
+
+  "chg_eng_cable_yjv70_unit_yuan": 70.0,
+
+  "chg_eng_cable_yjv185_len_m": 0.0,
+
+  "chg_eng_cable_yjv185_unit_yuan": 790.0,
+
+  "chg_eng_pipe50_len_m": 0.0,
+
+  "chg_eng_pipe50_unit_yuan": 3.0,
+
+  "chg_eng_pipe100_len_m": 0.0,
+
+  "chg_eng_pipe100_unit_yuan": 60.0,
+
+  "chg_eng_grounding_flat_yuan": 200.0,
+
+  "chg_eng_fire_seal_yuan": 2900.0,
+
+  "chg_eng_lay_direct_len_m": 0.0,
+
+  "chg_eng_lay_direct_unit_yuan": 42.0,
+
+  "chg_eng_lay_slope_len_m": 0.0,
+
+  "chg_eng_lay_slope_unit_yuan": 240.0,
+
+  "chg_eng_extinguisher_qty": 4,
+
+  "chg_eng_extinguisher_unit_yuan": 525.0,
+
+  "chg_eng_cement_terminal_qty": 0,
+
+  "chg_eng_cement_terminal_unit_yuan": 300.0,
+
+  "chg_eng_microgrid_qty": 1,
+
+  "chg_eng_microgrid_unit_yuan": 6000.0,
+
+  "chg_eng_microgrid_debug_days": 1.0,
+
+  "chg_eng_microgrid_debug_unit_yuan": 1000.0,
+
+  "chg_eng_microgrid_equip_yuan": 6000.0,
+
+  "chg_eng_microgrid_debug_yuan": 1000.0,
+
+  "chg_eng_dc_material": "铜缆",
+
+  "chg_eng_dc_copper_unit_yuan": 0.0,
+
+  "chg_eng_dc_aluminum_unit_yuan": 0.0,
+
+  "chg_eng_dc_copper_len_m": 0.0,
+
+  "chg_eng_dc_aluminum_len_m": 0.0,
+
+  "sto_eng_rs485_len_m": 0.0,
+  "sto_eng_rs485_unit_yuan": 5.5,
+  "sto_eng_rs485_install_yuan": 275.0,
+  "sto_eng_anti_meter_qty": 2,
+  "sto_eng_anti_meter_unit_yuan": 1500.0,
+  "sto_eng_anti_meter_install_yuan": 1100.0,
+  "sto_eng_cable_yjlhv120_len_m": 0.0,
+  "sto_eng_cable_yjlhv120_unit_yuan": 50.0,
+  "sto_eng_cable_head_qty": 2,
+  "sto_eng_cable_head_unit_yuan": 220.0,
+  "sto_eng_pipe100_len_m": 0.0,
+  "sto_eng_pipe100_unit_yuan": 60.0,
+  "sto_eng_grounding_flat_qty": 20,
+  "sto_eng_grounding_flat_unit_yuan": 22.0,
+  "sto_eng_grounding_rod_qty": 4,
+  "sto_eng_grounding_rod_unit_yuan": 71.0,
+  "sto_eng_cabinet_base_qty": 1,
+  "sto_eng_cabinet_base_unit_yuan": 3300.0,
+  "sto_eng_system_debug_yuan": 5500.0,
+  "sto_eng_other_install_yuan": 2000.0,
+
+  "operating_days": 330.0,
+
+  "service_fee_per_kwh": 0.4,
+
+  "energy_per_gun_day": 200.0,
+
+  "ultra_energy_per_gun_day": 250.0,
+
+  "storage_cycles_per_day": 1.0,
+
+  "round_trip_efficiency": 0.9,
+
+  "annual_opex_percent": 2.0,
+
+  "vpp_revenue_wan": 0.0,
+
+  "horizon_years": 15,
+
+  "calc_financial_statements": false,
+
+  "vat_rate": 0.13,
+
+  "income_tax_rate": 0.25,
+
+  "discount_rate": 0.08,
+
+  "depreciation_years": 10,
+
+  "salvage_rate": 0.05,
+
+  "ancillary_times_per_year": 0.0,
+
+  "ancillary_unit_price_yuan": 0.0
+
+}
+

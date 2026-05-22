@@ -1,0 +1,31 @@
+# Cursor 项目规则 — Station_cost_estimation（工商业储充测算）
+
+## 项目定位
+- 本地 Streamlit 工具：工商业储能 + 充电站 **CAPEX/OPEX/收益粗算**（可研级简化模型，非会计核算）。
+- **单入口应用**：业务与 UI 集中在 `app.py`。依赖见 `requirements.txt`。
+
+## 技术栈与运行
+- Python 3；`streamlit`、`plotly`、`pandas`、`numpy`、`numpy-financial`（IRR，可选但推荐安装）。
+- 典型启动：`pip install -r requirements.txt` 后 `streamlit run app.py`。
+
+## 代码约定
+- **语言**：侧栏与页面文案用**中文**；业务逻辑处保留**清晰中文注释**，便于业务人员改公式。
+- **作者署名**：本项目新增实质性代码的作者标识统一为 **jiali.qiu**（与用户规则一致）。
+- **改动范围**：只做与需求相关的最小修改；不要随意拆分单文件为多包，除非明确要求。
+- **单位**：内部 Capex/Revenue/Opex **统一“元”**；展示 **“万元”** 时除以 `1e4`（与 `compute_projection()` 返回值约定一致）。
+- **样式**：Streamlit + 注入 CSS/Google Fonts；避免对侧栏使用 `*` 全局 `color: !important` 以免控件文字不可读。
+
+## 业务逻辑权威来源
+- 口径、场景假设与用户确认过的规则摘要见根目录 **`MEMORY.md`**。
+- 需要改计算公式或分项拆分：优先修改 `compute_projection()` 及其返回字典，再同步表中展示（`variable_cost_breakdown` / `revenue_breakdown` 等）。
+
+## 依赖与兼容性
+- 若未安装 `numpy-financial`，应用应仍可运行（IRR 不可用时有提示）。
+- `requirements.txt` 已约束主版本上限；升级大版本前请先本地跑一遍 `streamlit run app.py`。
+
+## Git / 协作
+- **不要擅自提交**：除非用户在对话里明确要求创建 commit。
+- 不要改写用户全局 git 配置；禁止使用破坏性 git 指令（除非用户明确要求）。
+
+## 与用户沟通
+- 对「电价」「枪数」「双枪」「纯峰谷套利是否扣低谷购电成本」等易造成歧义的变更，改代码前先对照 `MEMORY.md`，必要时在项目内补充注释或在 `MEMORY.md` 更新一句结论。

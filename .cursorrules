@@ -1,0 +1,42 @@
+# Cursor 项目规则 — Station_cost_estimation（工商业储充测算）
+
+## 项目定位
+- 本地 Streamlit 工具：工商业储能 + 充电站 **CAPEX/OPEX/收益粗算**（可研级简化模型，非会计核算）。
+- **单入口应用**：业务与 UI 集中在 `app.py`。依赖见 `requirements.txt`。
+
+## 技术栈与运行
+- Python 3.10+；`streamlit`、`plotly`、`pandas`、`numpy`、`numpy-financial`（IRR，可选但推荐安装）。
+- 典型启动：`pip install -r requirements.txt` 后 `streamlit run app.py`（或 `python -m streamlit run app.py`）。
+
+## 代码约定
+- **语言**：页面中文；业务逻辑处有清晰中文注释。**五步分步录入** + 左右分栏 +「确认测算」；侧栏隐藏。
+- **作者署名**：本项目新增实质性代码的作者标识统一为 **jiali.qiu**。
+- **改动范围**：只做与需求相关的最小修改；不要随意拆分单文件为多包，除非明确要求。
+- **单位**：内部 Capex/Revenue/Opex **统一「元」**；展示 **「万元」** 时除以 `1e4`（与 `compute_projection()` 返回值约定一致）。
+- **样式**：浅色工业极简主题；运营参数区使用 `.op-param-box`；避免全局 `* { color !important }` 覆盖控件可读性。
+
+## 业务逻辑权威来源
+- 口径、场景假设与用户确认过的规则摘要见根目录 **`MEMORY.md`**（含五步流程、第四部分施工分项、第五部分运营预览）。
+- **默认表单初值**来自 `config/cost_defaults.json`（在线编辑见 `render_site_defaults_editor()`）。
+- 需要改计算公式或分项拆分：优先修改 `compute_projection()` / `_annual_revenue_by_usage()`，再同步 `render_storage_operations_preview()` 与结果表（`revenue_breakdown` 等）。
+
+## 关键业务约束（易错）
+- **不安装储能**：储能工程 CAPEX 不计入；第三部分/第五部分储能区隐藏。
+- **车位超限**：仅 `st.warning` 提示扩充车位，**不得**作为 `errs` 阻断测算。
+- **水泥基础**：以表单 `chg_eng_cement_terminal_qty` × 单价计入充电桩工程，可与桩数终端推算值不一致。
+- **微网控制器**：第四部分独立块（与充电桩工程并列），**元**（数量×单价 + 天数×元/天）；Kt=1 为 0；Kt&lt;1 黄底提示。
+- **变压器增容**：`compute_transformer_upgrade_capex()`；CAPEX 计入 **相关物料**；确认测算时 **目标≥基准+缺口** 则不因相对缺口阻断。
+- **变压器建议档位**：`基准 + max(0, 需用−剩余可用)` 再取标准档；CAPEX 用 `max(0, 目标−基准)×单价`。
+- **动态增容**：削峰 kW 与储能功率均须 ≥ 缺口 kW 方可免增容 CAPEX；不足则 **容量不足** 并计入变压器增容。
+- **纯峰谷套利**：充电服务费不扣网购电；**峰谷+充电**：服务费已含在储充一体毛利内，勿重复扣减。
+
+## 依赖与兼容性
+- 若未安装 `numpy-financial`，应用应仍可运行（IRR 不可用时有提示）。
+- `requirements.txt` 已约束主版本上限；升级大版本前请先本地跑一遍 `streamlit run app.py`。
+
+## Git / 协作
+- **不要擅自提交**：除非用户在对话里明确要求创建 commit。
+- 不要改写用户全局 git 配置；禁止使用破坏性 git 指令（除非用户明确要求）。
+
+## 与用户沟通
+- 对「电价」「枪数」「双枪」「纯峰谷套利是否扣低谷购电成本」等易造成歧义的变更，改代码前先对照 `MEMORY.md`，必要时在项目内补充注释或在 `MEMORY.md` 更新一句结论。
