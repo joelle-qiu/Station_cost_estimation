@@ -129,7 +129,14 @@
   - **分期**：`gov_subsidy_annual_wan` × `gov_subsidy_years`（不超过 `horizon_years`），每年计入收入。
   - 利润表归入 **其他收入**；收入分项表见「政府补贴(一次性,第1年)」或「政府补贴(分期)」。
 
-## 10. 近期实现备忘（2026-05-21）
+## 10. 逆向分析（与正向解耦）
+
+- 模块：`reverse_analysis.py`（不修改正向 `compute_projection` 主流程）。
+- 基线：对 `InputModel` 剔除政府补贴后调用一次 `compute_projection`，取 `capex_total`、`net_operating_year`、`horizon_years`。
+- **目标回收期下的补贴需求**：输入目标回本（0–20 年，步长 0.5）、插值/静态口径、一次性或分期；反算最低补贴；**刷新逆向基线** 可按左侧当前表单重算（`reverse_refresh_pending`，不更新正向结果区）。
+- 正向提交按钮文案：**项目正向收益及回收期测算**。
+
+## 11. 近期实现备忘（2026-05-21）
 
 - 右侧投资分项：`render_capex_breakdown_grouped()`；微网明细键 `微网控制器(设备+调试)` **仅**归入微网块。
 - 关键函数：`compute_transformer_upgrade_capex()`、`compute_financial_statements()`、`battery_soh_factor()`。

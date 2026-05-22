@@ -10,9 +10,18 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from types import SimpleNamespace
+
+from reverse_analysis import (
+    ForwardBaseline,
+    PaybackMetric,
+    SubsidySolveMode,
+    baseline_from_projection,
+    cashflow_compare_rows,
+    solve_subsidy_for_target_payback,
+)
 from typing import Any
 
 import numpy as np
@@ -3564,6 +3573,11 @@ def _html_result_zone_title(text: str) -> None:
     st.markdown(f'<div class="ui-h2-result-zone">{text}</div>', unsafe_allow_html=True)
 
 
+def _html_module_title(text: str) -> None:
+    """右侧一级模块标题（正向 / 逆向）。"""
+    st.markdown(f'<div class="ui-h1-module">{text}</div>', unsafe_allow_html=True)
+
+
 def _html_flow_zone_open(title: str | None = None) -> None:
     """步内小节：仅显示 H2 标题，不用虚线框。"""
     if title:
@@ -4035,7 +4049,7 @@ def render_site_defaults_editor() -> None:
     with st.expander("默认成本参数（本地配置文件，可在线修改）", expanded=False):
         st.caption(
             f"配置文件路径：`{CONFIG_PATH}`"
-            " — 保存后下次打开或点击 **确认测算** 前即按新默认填表（Streamlit 会整页重跑）。"
+            " — 保存后下次打开或点击 **项目正向收益及回收期测算** 前即按新默认填表（Streamlit 会整页重跑）。"
         )
         current = load_site_cost_defaults()
         df0 = defaults_dict_to_editor_df(current)
@@ -4141,6 +4155,18 @@ def _inject_global_style() -> None:
     margin: 0 0 0.65rem;
     padding-bottom: 0.35rem;
     border-bottom: 1px solid #cbd5e1;
+  }
+  .ui-h1-module {
+    font-size: 1.28rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 1.75rem 0 0.85rem;
+    padding: 0.35rem 0 0.45rem;
+    border-bottom: 3px solid #334155;
+    letter-spacing: 0.02em;
+  }
+  div[data-testid="column"] .ui-h1-module:first-of-type {
+    margin-top: 0.15rem;
   }
   .ui-h1-step,
   .section-block-title {
@@ -5836,7 +5862,7 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
     """
     左侧单页表单：分区 + 栅格排布，模拟「参数表」。
     初值来自 `defs`（一般由 load_site_cost_defaults() 提供）。
-    返回：(是否点击「确认测算」, 校验通过时的模型, 错误列表)
+    返回：(是否点击「项目正向收益及回收期测算」, 校验通过时的模型, 错误列表)
     """
     errs: list[str] = []
     d = defs
@@ -6802,9 +6828,15 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
             f"占用车位 **{spots_used_submit}** / **{spots}** 个。{PARKING_SPOTS_EXPAND_HINT}"
         )
 
-    submitted = st.button("确认测算", type="primary", use_container_width=True)
+    reverse_refresh = bool(st.session_state.pop("reverse_refresh_pending", False))
 
-    if not submitted:
+    submitted = st.button(
+        "项目正向收益及回收期测算",
+        type="primary",
+        use_container_width=True,
+    )
+
+    if not submitted and not reverse_refresh:
         return False, None, []
 
     if install_storage and sets < 1:
@@ -6971,9 +7003,39 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
         ancillary_unit_price_yuan=anc_price,
     )
 
+    if reverse_refresh:
+        if errs:
+            st.session_state.reverse_refresh_errs = list(errs)
+        else:
+            st.session_state.reverse_baseline = _build_reverse_baseline(inp)
+            st.session_state.reverse_refresh_errs = []
+        return False, None, errs
+
     if errs:
         return True, None, errs
     return True, inp, []
+
+
+def _inp_without_gov_subsidy(inp: InputModel) -> InputModel:
+    """逆向分析基线：剔除第五步已填政府补贴。作者: jiali.qiu"""
+    return replace(
+        inp,
+        gov_subsidy_mode=GOV_SUBSIDY_NONE,
+        gov_subsidy_once_wan=0.0,
+        gov_subsidy_annual_wan=0.0,
+        gov_subsidy_years=0,
+    )
+
+
+def _build_reverse_baseline(inp: InputModel) -> ForwardBaseline:
+    """从正向 projection 提取无补贴基线（仅依赖 compute_projection 返回值）。"""
+    res = compute_projection(_inp_without_gov_subsidy(inp))
+    net_op = float(res.get("net_operating_year", res["net_year"]))
+    return baseline_from_projection(
+        float(res["capex_total"]),
+        net_op,
+        int(inp.horizon_years),
+    )
 
 
 def _init_session_state() -> None:
@@ -6987,6 +7049,12 @@ def _init_session_state() -> None:
         st.session_state.site_basics_confirmed = False
     if "site_basics" not in st.session_state:
         st.session_state.site_basics = {}
+    if "reverse_baseline" not in st.session_state:
+        st.session_state.reverse_baseline = None
+    if "reverse_refresh_errs" not in st.session_state:
+        st.session_state.reverse_refresh_errs = []
+    if "reverse_refresh_pending" not in st.session_state:
+        st.session_state.reverse_refresh_pending = False
 
 
 def _render_capex_breakdown_grouped(res: dict[str, Any]) -> None:
@@ -7099,16 +7167,143 @@ def _render_revenue_calc_details(inp: InputModel, res: dict[str, Any]) -> None:
 
 
 def render_estimate_panel(inp: InputModel) -> None:
-    """右侧：在已确认的输入下渲染全部测算结果（KPI、表、图、方案）。"""
+    """右侧：正向收益与逆向分析（解耦展示）。"""
     try:
-        _render_estimate_panel_body(inp)
+        _html_module_title("项目收益与回收期")
+        _render_forward_estimate_body(inp)
+        st.markdown('<hr class="ui-step-divider" />', unsafe_allow_html=True)
+        _html_module_title("项目「逆向分析」")
+        _render_reverse_target_payback_subsidy(inp)
     except Exception as exc:
         st.error(f"测算结果渲染失败：{exc}")
         with st.expander("错误详情（供排查）"):
             st.exception(exc)
 
 
-def _render_estimate_panel_body(inp: InputModel) -> None:
+def _render_reverse_target_payback_subsidy(inp: InputModel) -> None:
+    """
+    逆向分析 · 目标回收期下的补贴需求（独立模块，基线不含政府补贴）。
+    作者: jiali.qiu
+    """
+    _html_substep_title("目标回收期下的补贴需求")
+    st.caption(
+        "基线取自 **成本（含施工）+ 运营参数 + 全站测算假设**，**不含**第五步政府补贴。"
+        "改左侧参数后请点 **刷新逆向基线**（将按当前表单重算基线，不更新上方正向结果）。"
+    )
+
+    r1, r2 = st.columns([1, 1])
+    with r1:
+        if st.button("刷新逆向基线", type="secondary", use_container_width=True, key="btn_reverse_refresh"):
+            st.session_state.reverse_refresh_pending = True
+            st.rerun()
+    with r2:
+        st.caption("需左侧表单校验通过；未改参数时与最近一次正向测算一致。")
+
+    for e in st.session_state.get("reverse_refresh_errs") or []:
+        st.error(e)
+
+    baseline = st.session_state.get("reverse_baseline")
+    if baseline is None:
+        baseline = _build_reverse_baseline(inp)
+        st.session_state.reverse_baseline = baseline
+
+    capex_wan = baseline.capex_yuan / 1e4
+    net_wan = baseline.net_operating_year_yuan / 1e4
+    pb0_s = baseline.payback_static_years
+    pb0_i = baseline.payback_interp_years
+    pb0_s_txt = f"{pb0_s:.2f}" if np.isfinite(pb0_s) else "—"
+    pb0_i_txt = f"{pb0_i:.2f}" if pb0_i is not None else "—"
+    _html_note_panel(
+        f"基线：总投资 **{capex_wan:,.2f}** 万元 · 稳态年净收益 **{net_wan:,.2f}** 万元/年 · "
+        f"测算 **{baseline.horizon_years}** 年 · 无补贴回本：静态 **{pb0_s_txt}** 年 / 插值 **{pb0_i_txt}** 年"
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        target_pb = float(
+            st.number_input(
+                "目标回本周期(年)",
+                min_value=0.0,
+                max_value=20.0,
+                value=5.0,
+                step=0.5,
+                key="rev_target_payback_years",
+            )
+        )
+    with c2:
+        metric_label = st.radio(
+            "达标口径",
+            options=["插值回本", "静态回本"],
+            horizontal=True,
+            key="rev_payback_metric",
+        )
+        metric: PaybackMetric = "interp" if metric_label == "插值回本" else "static"
+    with c3:
+        sub_mode_label = st.radio(
+            "反算补贴形态",
+            options=["一次性(第1年)", "分期(每年)"],
+            horizontal=True,
+            key="rev_subsidy_mode",
+        )
+        sub_mode: SubsidySolveMode = (
+            "once" if sub_mode_label.startswith("一次性") else "installment"
+        )
+
+    inst_years = max(1, min(int(inp.horizon_years), int(inp.gov_subsidy_years or 5)))
+    if sub_mode == "installment":
+        inst_years = int(
+            st.number_input(
+                "分期补贴年限(年)",
+                min_value=1,
+                max_value=max(1, int(inp.horizon_years)),
+                value=max(1, inst_years),
+                step=1,
+                key="rev_installment_years",
+            )
+        )
+
+    run_rev = st.button("计算补贴需求", type="primary", key="btn_reverse_calc")
+
+    if run_rev:
+        result = solve_subsidy_for_target_payback(
+            baseline,
+            target_pb,
+            metric=metric,
+            subsidy_mode=sub_mode,
+            installment_years=inst_years,
+        )
+        st.session_state.reverse_last_result = result
+    else:
+        result = st.session_state.get("reverse_last_result")
+
+    if result is None:
+        st.caption("填写目标回本周期后点击 **计算补贴需求**。")
+        return
+
+    if result.ok:
+        if result.already_met:
+            st.success(result.message)
+        else:
+            st.success(result.message)
+        m1, m2, m3 = st.columns(3)
+        with m1:
+            st.metric("所需补贴(万元)", f"{result.subsidy_wan:,.2f}")
+        with m2:
+            pb_s = result.payback_static_years
+            st.metric("含补贴静态回本(年)", f"{pb_s:.2f}" if np.isfinite(pb_s) else "—")
+        with m3:
+            pb_i = result.payback_interp_years
+            st.metric(
+                "含补贴插值回本(年)",
+                f"{pb_i:.2f}" if pb_i is not None else "—",
+            )
+        df_cmp = pd.DataFrame(cashflow_compare_rows(baseline, result))
+        st.dataframe(df_cmp, use_container_width=True, hide_index=True)
+    else:
+        st.warning(result.message)
+
+
+def _render_forward_estimate_body(inp: InputModel) -> None:
     _html_result_zone_title("① 核心指标")
     _render_grid_declaration_notice(
         total_installed_charger_kw(inp.n_pile_60, inp.n_pile_120, inp.n_ultra_480)
@@ -7395,7 +7590,8 @@ def main() -> None:
     st.title("工商业储充场站成本收益测算工具")
     _html_note(
         "左侧按 <strong>第一步场站 → 第二步桩 → 第三步储能 → 第四步施工 → 第五步运营</strong> 填写；"
-        "点击 <strong>确认测算</strong> 后，右侧按 <strong>指标 → 投资收入 → 现金流 → 财报（可选）→ 方案对比</strong> 展示。"
+        "点击 <strong>项目正向收益及回收期测算</strong> 后，右侧展示 <strong>项目收益与回收期</strong>；"
+        "其下 <strong>项目逆向分析</strong> 可反算目标回收期下的补贴需求。"
         " 储能收益模型见 MEMORY.md。"
     )
     st.markdown('<hr class="page-hero-divider" />', unsafe_allow_html=True)
@@ -7424,7 +7620,8 @@ def main() -> None:
             _html_column_title("参数录入")
             st.markdown(
                 '<p class="muted-hint">按 <strong>第二步 → 第三步 → 第四步 → 第五步</strong> 顺序填写，'
-                "最后点击底部 <strong>确认测算</strong>。数量类默认从 0 起；单价可参考底部默认值表。</p>",
+                "最后点击底部 <strong>项目正向收益及回收期测算</strong>。"
+                "数量类默认从 0 起；单价可参考底部默认值表。</p>",
                 unsafe_allow_html=True,
             )
             detail_defs = _build_detail_defaults(st.session_state.site_basics)
@@ -7434,6 +7631,9 @@ def main() -> None:
         st.session_state.form_submit_errs = form_errs
         if inp_ok is not None:
             st.session_state.confirmed_inp = inp_ok
+            st.session_state.reverse_baseline = _build_reverse_baseline(inp_ok)
+            st.session_state.reverse_refresh_errs = []
+            st.session_state.pop("reverse_last_result", None)
 
     with col_right:
         _html_column_title("测算结果")
@@ -7443,7 +7643,9 @@ def main() -> None:
         if not st.session_state.site_basics_confirmed:
             _html_note_panel("请先在左侧 **第一步** 确认场站地点、车位规格与数量、变压器及环境信息。")
         elif st.session_state.confirmed_inp is None:
-            _html_note_panel("场站信息已确认。请在左侧 **第二步** 填写参数并点击 **确认测算**。")
+            _html_note_panel(
+                "场站信息已确认。请在左侧填写参数并点击 **项目正向收益及回收期测算**。"
+            )
         else:
             if submitted and form_errs:
                 st.warning("本次提交未通过校验：右侧仍为上一版已保存结果。")
