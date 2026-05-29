@@ -140,4 +140,6 @@
 
 - 右侧投资分项：`render_capex_breakdown_grouped()`；微网明细键 `微网控制器(设备+调试)` **仅**归入微网块。
 - 关键函数：`compute_transformer_upgrade_capex()`、`compute_financial_statements()`、`battery_soh_factor()`。
+- **方案对比（⑤）**：保存前展开「当前方案 · 产品与车位」；`build_scheme_product_config()` 含 `layout_cells`；`render_scheme_product_config_panel()` 以 **HTML 场站平面示意**（每行 4 车位、桩在车位前标注 60/120/480kW）替代柱状图；写入 `product_config` 供已保存方案回看。
+- **第四步充电桩工程电缆（2026-05）**：`CHARGER_CABLE_SPECS` 为 1×ZRC-YJV 主缆 + 2×ZRC-YJVR（150 直流/70 PE）；删 YJLHV240 与旧 YJV22 三条；删铜/铝直流块；敷设 **桥架/电缆沟/直埋** 三选一、长度联动路径；钢管默认 **5 m**（沟至设备穿管）。旧 `chg_eng_*` 键载入时经 `_migrate_charger_eng_cfg` 迁移。
 - 更新摘要见根目录 `CHANGELOG.md`。
