@@ -108,8 +108,12 @@ _SLOT_DESC_BY_VEHICLE: dict[str, str] = {
 
 # 液冷 480kW：业务约定「一套主机」带 **4 个充电终端**（业务口径可调常量）
 ULTRA_CHARGE_TERMINALS_PER_RACK = 4
+# 水泥基座终端折算：业务口径为 480kW 每套按 6 个终端计
+CEMENT_TERMINALS_PER_ULTRA_SET = 6
 # 120kW 双枪：1 台桩占 2 个车位
 PILE_120_SPOTS_PER_UNIT = 2
+# 60kW 双枪：仅车位核算按 2 位/台；运营口径仍按整桩日均电量计算（不按双枪翻倍）
+PILE_60_SPOTS_PER_UNIT = 2
 # 120kW 双枪：1 台按 2 枪计日充电量
 PILE_120_GUNS_PER_UNIT = 2
 # 功率余量超过该值（kW）时在「数量与单价」区给出优化建议
@@ -233,8 +237,8 @@ CHARGER_CABLE_SPECS: list[tuple[str, str, float, str]] = [
 ]
 
 CHARGER_PIPE_SPECS: list[tuple[str, str, float, str]] = [
-    ("pipe50", "热镀锌钢管 φ50", 3.0, "电缆沟到各设备之间穿管"),
-    ("pipe100", "热镀锌钢管 φ100", 60.0, "电缆沟到各设备之间穿管"),
+    ("pipe50", "PVC管 φ50", 5.0, "充电桩主柜到各种终端、或者相变到各终端"),
+    ("pipe100", "PVC管 φ100", 15.0, "充电桩主柜到各种终端、或者相变到各终端"),
 ]
 
 CHARGER_PIPE_DEFAULT_LEN_M = 5.0
@@ -243,6 +247,17 @@ LAY_MODE_TRAY = "桥架"
 LAY_MODE_TRENCH = "电缆沟"
 LAY_MODE_DIRECT = "直埋"
 CHARGER_LAY_MODE_OPTIONS = [LAY_MODE_TRAY, LAY_MODE_TRENCH, LAY_MODE_DIRECT]
+GDD_BREAKER_OPTION_TO_KEY = {
+    "基础断路器": "basic",
+    "塑壳断路器（< 630kW项目）": "mccb",
+    "框架断路器（> 630kW项目）": "acb",
+}
+GGD_BREAKER_DEFAULT_UNIT_YUAN = {
+    "基础断路器": 15000.0,
+    "塑壳断路器（< 630kW项目）": 30000.0,
+    "框架断路器（> 630kW项目）": 100000.0,
+}
+CABLE_MATERIAL_OPTIONS = ["铜缆", "铝缆"]
 
 CHARGER_ENG_LEN_KEYS = [f"chg_eng_{s[0]}_len_m" for s in CHARGER_CABLE_SPECS] + [
     "chg_eng_lay_len_m",
@@ -252,31 +267,47 @@ CHARGER_PIPE_LEN_KEYS = [f"chg_eng_{s[0]}_len_m" for s in CHARGER_PIPE_SPECS]
 
 CHARGER_ENG_BUILTIN_DEFAULTS: dict[str, Any] = {
     "chg_eng_ggd_qty": 1,
-    "chg_eng_ggd_unit_yuan": 18000.0,
-    "chg_eng_ggd_install_yuan": 1050.0,
+    "chg_eng_ggd_breaker_type": "基础断路器",
+    "chg_eng_ggd_unit_basic_yuan": 15000.0,
+    "chg_eng_ggd_unit_mccb_yuan": 30000.0,
+    "chg_eng_ggd_unit_acb_yuan": 100000.0,
+    "chg_eng_ggd_unit_yuan": 15000.0,
+    "chg_eng_ggd_install_yuan": 1250.0,
     "chg_eng_meter_qty": 1,
     "chg_eng_meter_unit_yuan": 2300.0,
     "chg_eng_meter_install_yuan": 105.0,
+    "chg_eng_cable_material": "铜缆",
     "chg_eng_cable_ac_main_unit_yuan": 115.0,
     "chg_eng_cable_yjvr150_unit_yuan": 1030.0,
     "chg_eng_cable_yjvr70_unit_yuan": 70.0,
-    "chg_eng_pipe50_unit_yuan": 3.0,
-    "chg_eng_pipe100_unit_yuan": 60.0,
-    "chg_eng_grounding_flat_yuan": 200.0,
-    "chg_eng_fire_seal_yuan": 2900.0,
+    "chg_eng_cable_ac_main_copper_unit_yuan": 115.0,
+    "chg_eng_cable_ac_main_aluminum_unit_yuan": 80.0,
+    "chg_eng_cable_yjvr150_copper_unit_yuan": 1030.0,
+    "chg_eng_cable_yjvr150_aluminum_unit_yuan": 720.0,
+    "chg_eng_cable_yjvr70_copper_unit_yuan": 70.0,
+    "chg_eng_cable_yjvr70_aluminum_unit_yuan": 48.0,
+    "chg_eng_pipe50_unit_yuan": 5.0,
+    "chg_eng_pipe100_unit_yuan": 15.0,
+    "chg_eng_grounding_flat_unit_yuan_per_m": 30.0,
+    "chg_eng_fire_seal_unit_yuan_per_ton": 7000.0,
+    "chg_eng_grounding_flat_yuan": 0.0,
+    "chg_eng_fire_seal_yuan": 0.0,
     "chg_eng_lay_mode": LAY_MODE_TRENCH,
-    "chg_eng_lay_tray_unit_yuan": 240.0,
-    "chg_eng_lay_trench_unit_yuan": 42.0,
-    "chg_eng_lay_direct_unit_yuan": 42.0,
+    "chg_eng_lay_tray_unit_yuan": 115.0,
+    "chg_eng_lay_trench_concrete_unit_yuan": 800.0,
+    "chg_eng_lay_trench_brick_unit_yuan": 500.0,
+    "chg_eng_lay_trench_unit_yuan": 800.0,
+    "chg_eng_lay_direct_unit_yuan": 20.0,
     "chg_eng_extinguisher_qty": 4,
     "chg_eng_extinguisher_unit_yuan": 525.0,
+    "chg_eng_other_install_yuan": 0.0,
     "chg_eng_cement_terminal_qty": 0,
     "chg_eng_cement_terminal_unit_yuan": 300.0,
     "chg_eng_microgrid_qty": 1,
-    "chg_eng_microgrid_unit_yuan": 6000.0,
+    "chg_eng_microgrid_unit_yuan": 50000.0,
     "chg_eng_microgrid_debug_days": 1.0,
     "chg_eng_microgrid_debug_unit_yuan": 1000.0,
-    "chg_eng_microgrid_equip_yuan": 6000.0,
+    "chg_eng_microgrid_equip_yuan": 50000.0,
     "chg_eng_microgrid_debug_yuan": 1000.0,
 }
 
@@ -289,21 +320,20 @@ STORAGE_ENG_LEN_KEYS = (
 STORAGE_ENG_BUILTIN_DEFAULTS: dict[str, Any] = {
     "sto_eng_rs485_unit_yuan": 5.5,
     "sto_eng_rs485_install_yuan": 275.0,
-    "sto_eng_anti_meter_qty": 2,
+    "sto_eng_anti_meter_qty": 1,
     "sto_eng_anti_meter_unit_yuan": 1500.0,
     "sto_eng_anti_meter_install_yuan": 1100.0,
     "sto_eng_cable_yjlhv120_unit_yuan": 50.0,
     "sto_eng_cable_head_qty": 2,
     "sto_eng_cable_head_unit_yuan": 220.0,
+    "sto_eng_pipe100_len_m": 6.0,
     "sto_eng_pipe100_unit_yuan": 60.0,
-    "sto_eng_grounding_flat_qty": 20,
+    "sto_eng_grounding_flat_qty": 2,
     "sto_eng_grounding_flat_unit_yuan": 22.0,
-    "sto_eng_grounding_rod_qty": 4,
-    "sto_eng_grounding_rod_unit_yuan": 71.0,
     "sto_eng_cabinet_base_qty": 1,
     "sto_eng_cabinet_base_unit_yuan": 3300.0,
     "sto_eng_system_debug_yuan": 5500.0,
-    "sto_eng_other_install_yuan": 2000.0,
+    "sto_eng_other_install_yuan": 5000.0,
 }
 
 
@@ -336,6 +366,7 @@ class ChargerEngineeringInputs:
     lay_direct_unit_yuan: float
     extinguisher_qty: int
     extinguisher_unit_yuan: float
+    other_install_yuan: float
     cement_terminal_qty: int
     cement_terminal_unit_yuan: float
     microgrid_equip_yuan: float
@@ -343,12 +374,29 @@ class ChargerEngineeringInputs:
 
 
 def charger_terminal_count(n60: int, n120: int, n480: int) -> int:
-    """充电终端数：60kW 1枪/台，120kW 2枪/台，480kW 4终端/套。"""
+    """充电测算口径终端数：60kW 按1、120kW 按2、480kW 按4。"""
     return (
         max(0, int(n60)) * 1
         + max(0, int(n120)) * 2
         + max(0, int(n480)) * ULTRA_CHARGE_TERMINALS_PER_RACK
     )
+
+
+def cement_terminal_count(n60: int, n120: int, n480: int) -> int:
+    """水泥基座终端数：60kW×1、120kW×1、480kW×6/套。"""
+    return max(0, int(n60)) + max(0, int(n120)) + max(0, int(n480)) * CEMENT_TERMINALS_PER_ULTRA_SET
+
+
+def pvc_pipe_len_by_formula(n60: int, n120: int, n480: int, lay_len_m: float) -> float:
+    """PVC管长度联动： (60数量 + 120数量 + 480套数×4) × 4 × 铺设长度。"""
+    unit_groups = max(0, int(n60)) + max(0, int(n120)) + max(0, int(n480)) * 4
+    return float(unit_groups) * 4.0 * max(0.0, float(lay_len_m))
+
+
+def pvc_pipe_len_trench_by_terminals(n60: int, n120: int, n480: int) -> float:
+    """电缆沟下 PVC 各管长度：终端数 × 5。"""
+    terminals = charger_terminal_count(n60, n120, n480)
+    return float(terminals) * 5.0
 
 
 PARKING_SPOTS_EXPAND_HINT = (
@@ -361,7 +409,7 @@ def cement_terminal_qty_from_cfg(c: dict[str, Any], d: dict[str, Any]) -> int:
     qty = int(c.get("chg_eng_cement_terminal_qty", 0) or 0)
     if qty > 0:
         return qty
-    return charger_terminal_count(
+    return cement_terminal_count(
         int(d.get("n_pile_60", 0)),
         int(d.get("n_pile_120", 0)),
         int(d.get("n_ultra_480", 0)),
@@ -481,7 +529,15 @@ def _migrate_charger_eng_cfg(out: dict[str, Any]) -> None:
         )
     if "chg_eng_lay_tray_unit_yuan" not in out:
         out["chg_eng_lay_tray_unit_yuan"] = float(
-            out.pop("chg_eng_lay_slope_unit_yuan", 240.0) or 240.0
+            out.pop("chg_eng_lay_slope_unit_yuan", 115.0) or 115.0
+        )
+    if "chg_eng_lay_trench_concrete_unit_yuan" not in out:
+        out["chg_eng_lay_trench_concrete_unit_yuan"] = float(
+            out.get("chg_eng_lay_trench_unit_yuan", 800.0) or 800.0
+        )
+    if "chg_eng_lay_trench_brick_unit_yuan" not in out:
+        out["chg_eng_lay_trench_brick_unit_yuan"] = float(
+            out.get("chg_eng_lay_trench_brick_unit_yuan", 500.0) or 500.0
         )
     for pk in CHARGER_PIPE_LEN_KEYS:
         if float(out.get(pk, 0) or 0) <= 0:
@@ -492,10 +548,10 @@ def _charger_eng_lay_unit_yuan(cfg: dict[str, Any], mode: str) -> float:
     """按敷设方式取单价(元/m)。"""
     m = str(mode).strip()
     if m == LAY_MODE_TRAY:
-        return float(cfg.get("chg_eng_lay_tray_unit_yuan", 240.0))
+        return float(cfg.get("chg_eng_lay_tray_unit_yuan", 115.0))
     if m == LAY_MODE_DIRECT:
-        return float(cfg.get("chg_eng_lay_direct_unit_yuan", 42.0))
-    return float(cfg.get("chg_eng_lay_trench_unit_yuan", 42.0))
+        return float(cfg.get("chg_eng_lay_direct_unit_yuan", 20.0))
+    return float(cfg.get("chg_eng_lay_trench_unit_yuan", 800.0))
 
 
 def _charger_eng_defaults_merged(cfg: dict[str, Any], farthest_m: float) -> dict[str, Any]:
@@ -504,9 +560,24 @@ def _charger_eng_defaults_merged(cfg: dict[str, Any], farthest_m: float) -> dict
     for k, v in cfg.items():
         if k.startswith("chg_eng_"):
             out[k] = v
+    # 兼容旧默认价：自动迁移 PVC φ50/φ100 单价 3/60 -> 5/15
+    if abs(float(out.get("chg_eng_pipe50_unit_yuan", 0.0) or 0.0) - 3.0) < 1e-6:
+        out["chg_eng_pipe50_unit_yuan"] = 5.0
+    if abs(float(out.get("chg_eng_pipe100_unit_yuan", 0.0) or 0.0) - 60.0) < 1e-6:
+        out["chg_eng_pipe100_unit_yuan"] = 15.0
     _migrate_charger_eng_cfg(out)
+    ggd_breaker_type = str(out.get("chg_eng_ggd_breaker_type", "基础断路器"))
+    ggd_type_key = GDD_BREAKER_OPTION_TO_KEY.get(ggd_breaker_type, "basic")
+    ggd_key = f"chg_eng_ggd_unit_{ggd_type_key}_yuan"
+    out["chg_eng_ggd_unit_yuan"] = float(out.get(ggd_key, out.get("chg_eng_ggd_unit_yuan", 15000.0)) or 0.0)
+    cable_material = str(out.get("chg_eng_cable_material", "铜缆")).strip()
+    cable_material_key = "copper" if cable_material == "铜缆" else "aluminum"
+    for suffix, _label, _def_unit, _hint in CHARGER_CABLE_SPECS:
+        mk = f"chg_eng_{suffix}_{cable_material_key}_unit_yuan"
+        uk = f"chg_eng_{suffix}_unit_yuan"
+        out[uk] = float(out.get(mk, out.get(uk, 0.0)) or 0.0)
     mg_qty = max(0, int(float(out.get("chg_eng_microgrid_qty", 1) or 1)))
-    mg_unit = max(0.0, float(out.get("chg_eng_microgrid_unit_yuan", 6000.0)))
+    mg_unit = max(0.0, float(out.get("chg_eng_microgrid_unit_yuan", 50000.0)))
     mg_days = max(0.0, float(out.get("chg_eng_microgrid_debug_days", 1.0)))
     mg_dbg_unit = max(0.0, float(out.get("chg_eng_microgrid_debug_unit_yuan", 1000.0)))
     out["chg_eng_microgrid_qty"] = mg_qty
@@ -529,17 +600,67 @@ def _charger_eng_defaults_merged(cfg: dict[str, Any], farthest_m: float) -> dict
             out["chg_eng_microgrid_debug_yuan"] = debug_legacy
     route = _default_route_len_m(farthest_m, cfg)
     out["chg_eng_route_len_m"] = route
+    if float(out.get("chg_eng_lay_len_m", 0) or 0) <= 0:
+        out["chg_eng_lay_len_m"] = route
     for lk in CHARGER_ENG_LEN_KEYS:
         if float(out.get(lk, 0) or 0) > 0:
             out[lk] = float(out[lk])
         else:
             out[lk] = route
+    lay_mode = str(out.get("chg_eng_lay_mode", LAY_MODE_TRENCH)).strip() or LAY_MODE_TRENCH
+    default_pipe_len = (
+        0.0
+        if lay_mode == LAY_MODE_TRAY
+        else CHARGER_PIPE_DEFAULT_LEN_M
+        if lay_mode == LAY_MODE_TRENCH
+        else float(out.get("chg_eng_lay_len_m", route) or 0.0)
+    )
     for pk in CHARGER_PIPE_LEN_KEYS:
         if float(out.get(pk, 0) or 0) > 0:
             out[pk] = float(out[pk])
         else:
-            out[pk] = CHARGER_PIPE_DEFAULT_LEN_M
+            out[pk] = default_pipe_len
     return out
+
+
+def refresh_construction_linked_state(
+    d: dict[str, Any], *, farthest_m: float, n_pile_60: int, n_pile_120: int, n_ultra_480: int
+) -> None:
+    """按上游桩配置与铺设方式，刷新施工区联动参数。"""
+    cfg = _charger_eng_defaults_merged(d, farthest_m)
+    route = float(cfg.get("chg_eng_route_len_m", 0.0) or 0.0)
+    lay_mode = str(st.session_state.get("chg_eng_lay_mode", cfg.get("chg_eng_lay_mode", LAY_MODE_TRENCH)))
+    cement_qty = cement_terminal_count(n_pile_60, n_pile_120, n_ultra_480)
+    ground_unit = float(
+        st.session_state.get(
+            "chg_eng_grounding_flat_unit_yuan_per_m",
+            cfg.get("chg_eng_grounding_flat_unit_yuan_per_m", 30.0),
+        )
+    )
+    fire_unit = float(
+        st.session_state.get(
+            "chg_eng_fire_seal_unit_yuan_per_ton",
+            cfg.get("chg_eng_fire_seal_unit_yuan_per_ton", 7000.0),
+        )
+    )
+    lay_len = route
+    pvc_len = (
+        pvc_pipe_len_by_formula(n_pile_60, n_pile_120, n_ultra_480, lay_len)
+        if lay_mode == LAY_MODE_DIRECT
+        else 0.0
+        if lay_mode == LAY_MODE_TRAY
+        else pvc_pipe_len_trench_by_terminals(n_pile_60, n_pile_120, n_ultra_480)
+    )
+    grounding_flat = max(0, cement_qty) * 2.0 * max(0.0, ground_unit)
+    fire_seal_suggest = (max(0, cement_qty) * 2.0 + 30.0) / 1000.0 * max(0.0, fire_unit)
+    st.session_state["chg_eng_cement_terminal_qty"] = int(cement_qty)
+    st.session_state["chg_eng_lay_len_m"] = float(lay_len)
+    st.session_state["chg_eng_pipe50_len_m"] = float(pvc_len)
+    st.session_state["chg_eng_pipe100_len_m"] = float(pvc_len)
+    st.session_state["chg_eng_pipe50_unit_yuan"] = 5.0
+    st.session_state["chg_eng_pipe100_unit_yuan"] = 15.0
+    st.session_state["chg_eng_grounding_flat_yuan"] = float(grounding_flat)
+    st.session_state["chg_eng_fire_seal_yuan"] = float(fire_seal_suggest)
 
 
 def charger_engineering_from_dict(d: dict[str, Any]) -> ChargerEngineeringInputs:
@@ -570,6 +691,7 @@ def charger_engineering_from_dict(d: dict[str, Any]) -> ChargerEngineeringInputs
         lay_direct_unit_yuan=float(c["chg_eng_lay_direct_unit_yuan"]),
         extinguisher_qty=int(c["chg_eng_extinguisher_qty"]),
         extinguisher_unit_yuan=float(c["chg_eng_extinguisher_unit_yuan"]),
+        other_install_yuan=float(c.get("chg_eng_other_install_yuan", 0.0)),
         cement_terminal_qty=cement_terminal_qty_from_cfg(c, d),
         cement_terminal_unit_yuan=float(c["chg_eng_cement_terminal_unit_yuan"]),
         microgrid_equip_yuan=float(c["chg_eng_microgrid_equip_yuan"]),
@@ -608,6 +730,7 @@ def compute_charger_engineering_capex(ce: ChargerEngineeringInputs) -> tuple[flo
     )
     bd[f"敷设·{lay_mode}"] = max(0.0, ce.lay_len_m) * max(0.0, lay_up)
     bd["灭火器"] = max(0, ce.extinguisher_qty) * max(0.0, ce.extinguisher_unit_yuan)
+    bd["其他建安费"] = max(0.0, ce.other_install_yuan)
     total = sum(bd.values())
     return total, {k: v for k, v in bd.items() if v > 1e-6}
 
@@ -795,14 +918,15 @@ def render_charger_engineering_inputs(
     """第四部分 · 充电桩工程（左长度/数量、右单价；微网见并列「微网控制器」）。"""
     cfg = _charger_eng_defaults_merged(d, farthest_m)
     route = float(cfg["chg_eng_route_len_m"])
-    terminals = charger_terminal_count(n_pile_60, n_pile_120, n_ultra_480)
+    terminals = cement_terminal_count(n_pile_60, n_pile_120, n_ultra_480)
     _html_construction_subsection_title("充电桩工程")
     st.caption(
         f"默认敷设路径长度 = 最远车位距离 × {ROUTE_LEN_FACTOR} = **{route:.1f} m**"
         f"（第一步 {farthest_m:.0f} m）；**电力电缆与敷设**长度初值同此；"
-        f"**热镀锌钢管**默认 **{CHARGER_PIPE_DEFAULT_LEN_M:.0f} m**（电缆沟至各设备穿管），可改。"
+        "PVC长度建议按终端公式联动计算，可在施工区刷新。"
     )
     e1, e2, e3 = st.columns(3)
+    ggd_switch_state_key = "_chg_eng_ggd_prev_breaker_type"
     with e1:
         ggd_qty = int(
             st.number_input(
@@ -814,15 +938,37 @@ def render_charger_engineering_inputs(
                 key="chg_eng_ggd_qty",
             )
         )
+        ggd_breaker_type = st.selectbox(
+            "并网柜设备选型",
+            options=list(GDD_BREAKER_OPTION_TO_KEY.keys()),
+            index=_select_index(
+                list(GDD_BREAKER_OPTION_TO_KEY.keys()),
+                str(cfg.get("chg_eng_ggd_breaker_type", "基础断路器")),
+                "基础断路器",
+            ),
+            key="chg_eng_ggd_breaker_type",
+        )
+        ggd_type_key = GDD_BREAKER_OPTION_TO_KEY[ggd_breaker_type]
+        ggd_unit_default_key = f"chg_eng_ggd_unit_{ggd_type_key}_yuan"
+        ggd_default_unit = float(
+            cfg.get(ggd_unit_default_key, GGD_BREAKER_DEFAULT_UNIT_YUAN[ggd_breaker_type])
+        )
+        prev_breaker = str(st.session_state.get(ggd_switch_state_key, ggd_breaker_type))
+        if prev_breaker != ggd_breaker_type:
+            # 选型切换时，单价联动回填对应默认价（仍允许后续手改）
+            st.session_state["chg_eng_ggd_unit_yuan"] = ggd_default_unit
+        st.session_state[ggd_switch_state_key] = ggd_breaker_type
         ggd_unit = float(
             st.number_input(
                 "并网柜设备单价(元/台)",
                 min_value=0.0,
-                value=float(cfg["chg_eng_ggd_unit_yuan"]),
+                value=ggd_default_unit,
                 step=100.0,
                 key="chg_eng_ggd_unit_yuan",
             )
         )
+        cfg[ggd_unit_default_key] = ggd_unit
+        st.caption("联动默认价：塑壳 3万元 / 框架 10万元 / 基础 1.5万元（可手动调整）。")
     with e2:
         ggd_install = float(
             st.number_input(
@@ -863,11 +1009,10 @@ def render_charger_engineering_inputs(
         )
 
     st.markdown("**水泥基础**")
-    cfg_cement_qty = int(cfg.get("chg_eng_cement_terminal_qty", 0) or 0)
-    cement_default = cfg_cement_qty if cfg_cement_qty > 0 else terminals
+    cement_default = terminals
     st.caption(
         f"按 **终端数 × 单价** 计入 CAPEX；参考桩配置约 **{terminals}** 个终端"
-        f"（60kW×1 + 120kW×2 + 480kW×{ULTRA_CHARGE_TERMINALS_PER_RACK}/套），可改。"
+        f"（60kW×1 + 120kW×1 + 480kW×{CEMENT_TERMINALS_PER_ULTRA_SET}/套），可改。"
     )
     cem1, cem2 = st.columns(2)
     with cem1:
@@ -878,7 +1023,8 @@ def render_charger_engineering_inputs(
                 value=cement_default,
                 step=1,
                 key="chg_eng_cement_terminal_qty",
-                help="与桩数可不一致；以本栏填写为准计入测算。",
+                disabled=True,
+                help="按桩配置自动联动计算：60kW×1 + 120kW×1 + 480kW×6。",
             )
         )
     with cem2:
@@ -894,24 +1040,39 @@ def render_charger_engineering_inputs(
 
     g1, g2 = st.columns(2)
     with g1:
-        grounding_flat = float(
+        grounding_flat_unit = float(
             st.number_input(
-                "接地扁铁(元)",
+                "接地扁铁单价(元/米，含安装)",
                 min_value=0.0,
-                value=float(cfg["chg_eng_grounding_flat_yuan"]),
-                step=10.0,
-                key="chg_eng_grounding_flat_yuan",
+                value=float(cfg.get("chg_eng_grounding_flat_unit_yuan_per_m", 30.0)),
+                step=1.0,
+                key="chg_eng_grounding_flat_unit_yuan_per_m",
             )
         )
+        grounding_flat = max(0, cement_qty) * 2.0 * max(0.0, grounding_flat_unit)
+        st.caption(
+            f"接地扁铁 = 终端数 **{cement_qty}** × 1 × 2m × **{grounding_flat_unit:.0f}** 元/m = **{grounding_flat:,.0f}** 元"
+        )
     with g2:
+        fire_seal_unit = float(cfg.get("chg_eng_fire_seal_unit_yuan_per_ton", 7000.0))
+        fire_seal_kg = max(0, cement_qty) * 2.0 + 30.0
+        fire_seal_suggest = fire_seal_kg / 1000.0 * max(0.0, fire_seal_unit)
+        fire_seal_default = (
+            float(cfg.get("chg_eng_fire_seal_yuan", 0.0))
+            if float(cfg.get("chg_eng_fire_seal_yuan", 0.0) or 0.0) > 0
+            else fire_seal_suggest
+        )
         fire_seal = float(
             st.number_input(
-                "防火封堵(元)",
+                "防火泥封堵(元)",
                 min_value=0.0,
-                value=float(cfg["chg_eng_fire_seal_yuan"]),
-                step=50.0,
+                value=float(fire_seal_default),
+                step=10.0,
                 key="chg_eng_fire_seal_yuan",
             )
+        )
+        st.caption(
+            f"建议价： (终端数 **{cement_qty}** × 2kg + 30kg) × {fire_seal_unit:.0f} 元/吨 = **{fire_seal_suggest:,.0f}** 元（可按项目调整总价）"
         )
 
     x1, x2 = st.columns(2)
@@ -935,16 +1096,38 @@ def render_charger_engineering_inputs(
                 key="chg_eng_extinguisher_unit_yuan",
             )
         )
+    other_install = float(
+        st.number_input(
+            "其他建安费(元)",
+            min_value=0.0,
+            value=float(cfg.get("chg_eng_other_install_yuan", 0.0)),
+            step=50.0,
+            key="chg_eng_other_install_yuan",
+        )
+    )
 
     st.markdown("**电缆与管材（长度 × 单价）**")
-    st.caption("以下三项：电力电缆 → 热镀锌钢管 → 电缆敷设（方式三选一）。")
+    st.caption("以下两项：电力电缆（含材质）→ 电缆敷设（含钢管，方式三选一）。")
 
     with st.expander("① 电力电缆", expanded=False):
+        cable_material = st.radio(
+            "电缆材质",
+            options=CABLE_MATERIAL_OPTIONS,
+            index=_select_index(
+                CABLE_MATERIAL_OPTIONS,
+                str(cfg.get("chg_eng_cable_material", "铜缆")),
+                "铜缆",
+            ),
+            horizontal=True,
+            key="chg_eng_cable_material",
+        )
         _html_len_price_header()
         for suffix, label, _def_unit, hint in CHARGER_CABLE_SPECS:
             c_len, c_unit = st.columns(2)
             lk = f"chg_eng_{suffix}_len_m"
             uk = f"chg_eng_{suffix}_unit_yuan"
+            material_key = "copper" if cable_material == "铜缆" else "aluminum"
+            material_uk = f"chg_eng_{suffix}_{material_key}_unit_yuan"
             with c_len:
                 cfg[lk] = float(
                     st.number_input(
@@ -957,50 +1140,20 @@ def render_charger_engineering_inputs(
                     )
                 )
             with c_unit:
-                cfg[uk] = float(
+                unit_val = float(
                     st.number_input(
                         f"{label} 单价(元/m)",
                         min_value=0.0,
-                        value=float(cfg[uk]),
+                        value=float(cfg.get(material_uk, cfg[uk])),
                         step=1.0,
-                        key=f"form_{uk}",
+                        key=f"form_{uk}_{material_key}",
                     )
                 )
+                cfg[uk] = unit_val
+                cfg[material_uk] = unit_val
             st.caption(f"用途：{hint}")
 
-    with st.expander("② 热镀锌钢管（电缆沟至各设备穿管）", expanded=False):
-        _html_len_price_header()
-        pipe_vals: dict[str, tuple[float, float]] = {}
-        for suffix, label, _def_unit, hint in CHARGER_PIPE_SPECS:
-            c_len, c_unit = st.columns(2)
-            lk = f"chg_eng_{suffix}_len_m"
-            uk = f"chg_eng_{suffix}_unit_yuan"
-            with c_len:
-                ln = float(
-                    st.number_input(
-                        f"{label} 长度(m)",
-                        min_value=0.0,
-                        value=float(cfg[lk]),
-                        step=0.5,
-                        key=lk,
-                        help=f"{hint}；默认 {CHARGER_PIPE_DEFAULT_LEN_M:.0f} m",
-                    )
-                )
-            with c_unit:
-                up = float(
-                    st.number_input(
-                        f"{label} 单价(元/m)",
-                        min_value=0.0,
-                        value=float(cfg[uk]),
-                        step=0.5 if suffix == "pipe50" else 1.0,
-                        key=uk,
-                    )
-                )
-            pipe_vals[suffix] = (ln, up)
-        pipe50_len, pipe50_unit = pipe_vals["pipe50"]
-        pipe100_len, pipe100_unit = pipe_vals["pipe100"]
-
-    with st.expander("③ 电缆敷设", expanded=False):
+    with st.expander("② 电缆铺设", expanded=False):
         lay_mode = st.radio(
             "敷设方式（三选一）",
             options=CHARGER_LAY_MODE_OPTIONS,
@@ -1013,8 +1166,21 @@ def render_charger_engineering_inputs(
             key="chg_eng_lay_mode",
         )
         cfg["chg_eng_lay_mode"] = lay_mode
+        lay_switch_state_key = "_chg_eng_prev_lay_mode"
+        prev_lay_mode = str(st.session_state.get(lay_switch_state_key, lay_mode))
+        lay_mode_switched = prev_lay_mode != lay_mode
+        st.session_state[lay_switch_state_key] = lay_mode
+        if lay_mode == LAY_MODE_TRAY:
+            lay_default_len = route
+            pipe_default_len = 0.0
+        elif lay_mode == LAY_MODE_TRENCH:
+            lay_default_len = route
+            pipe_default_len = CHARGER_PIPE_DEFAULT_LEN_M
+        else:
+            lay_default_len = route
+            pipe_default_len = lay_default_len
         st.caption(
-            f"敷设长度默认与路径一致（**{route:.1f} m**）；仅选中方式的单价参与合计。"
+            "PVC长度联动：桥架=0；电缆沟=终端数×5；直埋=(60数量 + 120数量 + 480套数×4) × 4 × 铺设长度。"
         )
         _html_len_price_header()
         lay1, lay2 = st.columns(2)
@@ -1023,21 +1189,44 @@ def render_charger_engineering_inputs(
                 st.number_input(
                     "敷设长度(m)",
                     min_value=0.0,
-                    value=float(cfg["chg_eng_lay_len_m"]),
+                    value=float(cfg["chg_eng_lay_len_m"] or lay_default_len),
                     step=1.0,
                     key="chg_eng_lay_len_m",
                 )
             )
         with lay2:
-            lay_unit = float(
-                st.number_input(
-                    f"{lay_mode} 单价(元/m)",
-                    min_value=0.0,
-                    value=_charger_eng_lay_unit_yuan(cfg, lay_mode),
-                    step=1.0 if lay_mode != LAY_MODE_TRAY else 5.0,
-                    key=f"chg_eng_lay_unit_{lay_mode}",
+            if lay_mode == LAY_MODE_TRENCH:
+                trench_type = st.selectbox(
+                    "电缆沟类型",
+                    options=["混凝土", "砖砌"],
+                    index=0,
+                    key="chg_eng_lay_trench_type",
                 )
-            )
+                trench_key = (
+                    "chg_eng_lay_trench_concrete_unit_yuan"
+                    if trench_type == "混凝土"
+                    else "chg_eng_lay_trench_brick_unit_yuan"
+                )
+                lay_unit = float(
+                    st.number_input(
+                        f"电缆沟·{trench_type}单价(元/m)",
+                        min_value=0.0,
+                        value=float(cfg.get(trench_key, 800.0 if trench_type == "混凝土" else 500.0)),
+                        step=1.0,
+                        key=trench_key,
+                    )
+                )
+                cfg["chg_eng_lay_trench_unit_yuan"] = lay_unit
+            else:
+                lay_unit = float(
+                    st.number_input(
+                        f"{lay_mode} 单价(元/m)",
+                        min_value=0.0,
+                        value=_charger_eng_lay_unit_yuan(cfg, lay_mode),
+                        step=1.0 if lay_mode != LAY_MODE_TRAY else 5.0,
+                        key=f"chg_eng_lay_unit_{lay_mode}",
+                    )
+                )
         if lay_mode == LAY_MODE_TRAY:
             cfg["chg_eng_lay_tray_unit_yuan"] = lay_unit
         elif lay_mode == LAY_MODE_DIRECT:
@@ -1045,6 +1234,64 @@ def render_charger_engineering_inputs(
         else:
             cfg["chg_eng_lay_trench_unit_yuan"] = lay_unit
         cfg["chg_eng_lay_len_m"] = lay_len
+        if lay_mode_switched:
+            pvc_default = (
+                pvc_pipe_len_by_formula(n_pile_60, n_pile_120, n_ultra_480, lay_len)
+                if lay_mode == LAY_MODE_DIRECT
+                else 0.0
+                if lay_mode == LAY_MODE_TRAY
+                else pvc_pipe_len_trench_by_terminals(n_pile_60, n_pile_120, n_ultra_480)
+            )
+            st.session_state["chg_eng_pipe50_len_m"] = pvc_default
+            st.session_state["chg_eng_pipe100_len_m"] = pvc_default
+        _html_len_price_header()
+        pipe_vals: dict[str, tuple[float, float]] = {}
+        pvc_len_formula = pvc_pipe_len_by_formula(n_pile_60, n_pile_120, n_ultra_480, lay_len)
+        for suffix, label, _def_unit, hint in CHARGER_PIPE_SPECS:
+            c_len, c_unit = st.columns(2)
+            lk = f"chg_eng_{suffix}_len_m"
+            uk = f"chg_eng_{suffix}_unit_yuan"
+            if suffix == "pipe50" and abs(float(st.session_state.get(uk, cfg.get(uk, 5.0)) or 0.0) - 3.0) < 1e-6:
+                st.session_state[uk] = 5.0
+            if suffix == "pipe100" and abs(float(st.session_state.get(uk, cfg.get(uk, 15.0)) or 0.0) - 60.0) < 1e-6:
+                st.session_state[uk] = 15.0
+            pipe_init_len = float(cfg.get(lk, 0.0) or 0.0)
+            if suffix in ("pipe50", "pipe100"):
+                if lay_mode == LAY_MODE_DIRECT:
+                    pipe_init_len = pvc_len_formula
+                elif lay_mode == LAY_MODE_TRAY:
+                    pipe_init_len = 0.0
+                else:
+                    pipe_init_len = pvc_pipe_len_trench_by_terminals(
+                        n_pile_60, n_pile_120, n_ultra_480
+                    )
+            elif pipe_init_len <= 0:
+                pipe_init_len = lay_len if lay_mode == LAY_MODE_DIRECT else pipe_default_len
+            with c_len:
+                ln = float(
+                    st.number_input(
+                        f"{label} 长度(m)",
+                        min_value=0.0,
+                        value=pipe_init_len,
+                        step=0.5,
+                        key=lk,
+                        help=hint,
+                    )
+                )
+            with c_unit:
+                unit_default = 5.0 if suffix == "pipe50" else 15.0 if suffix == "pipe100" else float(cfg[uk])
+                up = float(
+                    st.number_input(
+                        f"{label} 单价(元/m)",
+                        min_value=0.0,
+                        value=float(cfg.get(uk, unit_default) or unit_default),
+                        step=0.5 if suffix == "pipe50" else 1.0,
+                        key=uk,
+                    )
+                )
+            pipe_vals[suffix] = (ln, up)
+        pipe50_len, pipe50_unit = pipe_vals["pipe50"]
+        pipe100_len, pipe100_unit = pipe_vals["pipe100"]
 
     ce = ChargerEngineeringInputs(
         ggd_qty=ggd_qty,
@@ -1072,6 +1319,7 @@ def render_charger_engineering_inputs(
         lay_direct_unit_yuan=float(cfg["chg_eng_lay_direct_unit_yuan"]),
         extinguisher_qty=ext_qty,
         extinguisher_unit_yuan=ext_unit,
+        other_install_yuan=other_install,
         cement_terminal_qty=cement_qty,
         cement_terminal_unit_yuan=cement_unit,
         microgrid_equip_yuan=0.0,
@@ -1100,8 +1348,6 @@ class StorageEngineeringInputs:
     pipe100_unit_yuan: float
     grounding_flat_qty: int
     grounding_flat_unit_yuan: float
-    grounding_rod_qty: int
-    grounding_rod_unit_yuan: float
     cabinet_base_qty: int
     cabinet_base_unit_yuan: float
     system_debug_yuan: float
@@ -1118,6 +1364,8 @@ def _storage_eng_defaults_merged(cfg: dict[str, Any], farthest_m: float) -> dict
     for lk in STORAGE_ENG_LEN_KEYS:
         if float(cfg.get(lk, 0) or 0) > 0:
             out[lk] = float(cfg[lk])
+        elif lk == "sto_eng_pipe100_len_m":
+            out[lk] = float(out.get("sto_eng_pipe100_len_m", 6.0) or 6.0)
         else:
             out[lk] = route
     return out
@@ -1142,7 +1390,6 @@ def compute_storage_engineering_capex(
     bd["低压电缆头"] = max(0, se.cable_head_qty) * max(0.0, se.cable_head_unit_yuan)
     bd["热镀锌钢管φ100"] = max(0.0, se.pipe100_len_m) * max(0.0, se.pipe100_unit_yuan)
     bd["接地扁铁"] = max(0, se.grounding_flat_qty) * max(0.0, se.grounding_flat_unit_yuan)
-    bd["接地极(热镀锌角钢)"] = max(0, se.grounding_rod_qty) * max(0.0, se.grounding_rod_unit_yuan)
     bd["储能柜基础"] = max(0, se.cabinet_base_qty) * max(0.0, se.cabinet_base_unit_yuan)
     bd["整系统调试"] = max(0.0, se.system_debug_yuan)
     bd["其他建安费"] = max(0.0, se.other_install_yuan)
@@ -1306,29 +1553,8 @@ def render_storage_engineering_inputs(
             )
         )
 
-    g1, g2, g3, g4 = st.columns(4)
+    g1, g2 = st.columns(2)
     with g1:
-        rod_qty = int(
-            st.number_input(
-                "接地极 数量(根)",
-                min_value=0,
-                value=int(cfg["sto_eng_grounding_rod_qty"]),
-                step=1,
-                help="热镀锌角钢 50×5 L=2500mm，镀锌层≥65μm。",
-                key="sto_eng_grounding_rod_qty",
-            )
-        )
-    with g2:
-        rod_unit = float(
-            st.number_input(
-                "接地极单价(元/根)",
-                min_value=0.0,
-                value=float(cfg["sto_eng_grounding_rod_unit_yuan"]),
-                step=1.0,
-                key="sto_eng_grounding_rod_unit_yuan",
-            )
-        )
-    with g3:
         base_qty = int(
             st.number_input(
                 "储能柜基础 数量(处)",
@@ -1338,7 +1564,7 @@ def render_storage_engineering_inputs(
                 key="sto_eng_cabinet_base_qty",
             )
         )
-    with g4:
+    with g2:
         base_unit = float(
             st.number_input(
                 "储能柜基础单价(元/处)",
@@ -1386,8 +1612,6 @@ def render_storage_engineering_inputs(
         pipe100_unit_yuan=pipe_unit,
         grounding_flat_qty=flat_qty,
         grounding_flat_unit_yuan=flat_unit,
-        grounding_rod_qty=rod_qty,
-        grounding_rod_unit_yuan=rod_unit,
         cabinet_base_qty=base_qty,
         cabinet_base_unit_yuan=base_unit,
         system_debug_yuan=system_debug,
@@ -2352,7 +2576,9 @@ def render_mode3_advisory_tool(
                 basic_kw_hint=basic_kw_price_hint,
             )
 
-        btn_refresh, btn_run = st.columns(2)
+        btn_left, btn_refresh, btn_run = st.columns([3, 1, 1])
+        with btn_left:
+            st.empty()
         with btn_refresh:
             if st.button(
                 "刷新联动数据",
@@ -2682,8 +2908,8 @@ def render_mode3_advisory_tool(
 
 
 def spots_used_by_60_120(n60: int, n120: int) -> int:
-    """60kW 每台 1 车位；120kW 双枪每台 2 车位。"""
-    return max(0, int(n60)) + max(0, int(n120)) * PILE_120_SPOTS_PER_UNIT
+    """60kW 双枪每台 2 车位；120kW 双枪每台 2 车位。"""
+    return max(0, int(n60)) * PILE_60_SPOTS_PER_UNIT + max(0, int(n120)) * PILE_120_SPOTS_PER_UNIT
 
 
 def _optimize_60_120_pair(max_kw: float, max_spots: int) -> tuple[int, int]:
@@ -2702,7 +2928,8 @@ def _optimize_60_120_pair(max_kw: float, max_spots: int) -> tuple[int, int]:
         spots_after_120 = max_spots - n120 * PILE_120_SPOTS_PER_UNIT
         if spots_after_120 < 0:
             continue
-        for n60 in range(spots_after_120 + 1):
+        max_n60 = spots_after_120 // PILE_60_SPOTS_PER_UNIT
+        for n60 in range(max_n60 + 1):
             kw = n60 * PILE_RATED_KW_60 + n120 * PILE_RATED_KW_120
             if kw <= budget + 1e-6 and (
                 kw > best_kw or (abs(kw - best_kw) < 1e-6 and n120 > best_n120)
@@ -2724,7 +2951,7 @@ def optimize_charger_mix(
     """
     按剩余 kVA 规划桩型：
     - 若选 480kW：先扣 1 套（占 ULTRA_PARKING_SPOTS_PER_SET 个车位）及对应 kVA；
-    - 余量与（总车位 − 480 占位数）内优先布置 120kW（每台占 2 车位），再 60kW（每台 1 车位），总功率尽量大。
+    - 余量与（总车位 − 480 占位数）内优先布置 120kW（每台占 2 车位），再 60kW（每台占 2 车位），总功率尽量大。
     """
     kva = max(0.0, float(kva_remaining))
     spot_cap = max(0, int(parking_spots))
@@ -2877,7 +3104,7 @@ def _format_charger_plan_calc_process(
             [
                 "",
                 f"**② 车位约束**：总 **{spots_total}** 位（未配置 480kW）",
-                "- 60kW：1 台占 **1** 位；120kW 双枪：1 台占 **2** 位",
+                "- 60kW 双枪：1 台占 **2** 位；120kW 双枪：1 台占 **2** 位",
             ]
         )
 
@@ -2890,7 +3117,7 @@ def _format_charger_plan_calc_process(
             f"- 可用车位：**{spots_for_60_120}** 位；可用功率约：**{pmax_rest:.1f} kW**",
             (
                 f"- 选用：**{n120} 台×120kW**（占 {n120 * PILE_120_SPOTS_PER_UNIT} 位）"
-                f" + **{n60} 台×60kW**（占 {n60} 位）→ 合计占 **{spots_60_120}** 位"
+                f" + **{n60} 台×60kW**（占 {n60 * PILE_60_SPOTS_PER_UNIT} 位）→ 合计占 **{spots_60_120}** 位"
             ),
             f"- 60/120 装机 = {n60}×60 + {n120}×120 = **{kw_60_120:.0f} kW**",
         ]
@@ -2986,7 +3213,7 @@ def suggest_charger_utilization_improvements(plan: dict[str, Any]) -> list[str]:
     )
 
     trials: list[tuple[str, int, int, int]] = []
-    if spots_left >= 1:
+    if spots_left >= PILE_60_SPOTS_PER_UNIT:
         trials.append(("增加 1 台 60kW", n60 + 1, n120, n480))
     if spots_left >= PILE_120_SPOTS_PER_UNIT:
         trials.append(("增加 1 台 120kW 双枪", n60, n120 + 1, n480))
@@ -3025,8 +3252,8 @@ def suggest_charger_utilization_improvements(plan: dict[str, Any]) -> list[str]:
             f"- 余量 ≥{PILE_RATED_KW_240_RECOMMEND:.0f}kW：可考虑 **2 台 120kW 双枪**（约 240kW 级）"
             "或 **1 套 480kW**（占 4 车位，需容量校验）。"
         )
-    if slack >= PILE_RATED_KW_60 and spots_left >= 1 and (best is None or best[4] < total + PILE_RATED_KW_60):
-        hints.append("- 或 **+1 台 60kW**（占 1 车位）消化部分余量。")
+    if slack >= PILE_RATED_KW_60 and spots_left >= PILE_60_SPOTS_PER_UNIT and (best is None or best[4] < total + PILE_RATED_KW_60):
+        hints.append(f"- 或 **+1 台 60kW**（占 {PILE_60_SPOTS_PER_UNIT} 车位）消化部分余量。")
     if spots_left <= 0 and slack >= CHARGER_UTILIZATION_SLACK_KW:
         hints.append(
             f"- **车位已满**（{spots_used}/{spots_total}），功率余量约 **{slack:.0f} kW**。"
@@ -3035,7 +3262,7 @@ def suggest_charger_utilization_improvements(plan: dict[str, Any]) -> list[str]:
         expand_options: list[tuple[str, int, int, int, int]] = []
         if slack + 1e-6 >= PILE_RATED_KW_60:
             expand_options.append(
-                ("扩充 **1** 个车位 → **+1 台 60kW**", 1, n60 + 1, n120, n480)
+                (f"扩充 **{PILE_60_SPOTS_PER_UNIT}** 个车位 → **+1 台 60kW**", PILE_60_SPOTS_PER_UNIT, n60 + 1, n120, n480)
             )
         if slack + 1e-6 >= PILE_RATED_KW_120:
             expand_options.append(
@@ -3183,7 +3410,7 @@ def render_custom_chargers_storage_planner(
     with p1:
         n60 = int(
             st.number_input(
-                "60kW（1枪/台）",
+                "60kW（双枪/台）",
                 min_value=0,
                 value=int(defs.get("n_pile_60", 0)),
                 step=1,
@@ -3225,9 +3452,10 @@ def render_custom_chargers_storage_planner(
     guns_480 = n480 * ULTRA_CHARGE_TERMINALS_PER_RACK
     st.markdown(
         f"**占用车位：** **{spots_used}** / {parking_spots} 个"
-        f"（60kW×{n60} + 120kW×{n120}×2位 + 480kW×{n480}×{ULTRA_PARKING_SPOTS_PER_SET}位） · "
+        f"（60kW×{n60}×{PILE_60_SPOTS_PER_UNIT}位 + 120kW×{n120}×2位 + 480kW×{n480}×{ULTRA_PARKING_SPOTS_PER_SET}位） · "
         f"充电枪合计约 **{guns_60 + guns_120 + guns_480}** 枪 · 装机 **{total_kw:.0f} kW**"
     )
+    st.caption("运营口径不变：60kW 仍按每台桩日均 200kWh 测算（不因双枪翻倍）。")
     if spots_used > parking_spots:
         st.warning(f"占用车位 {spots_used} 个，超过场站 {parking_spots} 个，请减桩或增加车位。")
 
@@ -3812,6 +4040,7 @@ PARAMETER_DEF_ROWS: list[tuple[str, str, str, str]] = [
     ("施工", "微网控制器单价(元/个)", "chg_eng_microgrid_unit_yuan", "float"),
     ("施工", "微网调试天数(天)", "chg_eng_microgrid_debug_days", "float"),
     ("施工", "微网调试单价(元/天)", "chg_eng_microgrid_debug_unit_yuan", "float"),
+    ("施工", "充电桩工程·其他建安费(元)", "chg_eng_other_install_yuan", "float"),
     ("运营与测算", "年运营天数", "operating_days", "float"),
     ("运营与测算", "充电服务费(元/kWh)", "service_fee_per_kwh", "float"),
     ("运营与测算", "常规单枪日均(kWh)", "energy_per_gun_day", "float"),
@@ -4729,7 +4958,7 @@ def _html_metric_hint(key: str) -> None:
 
 
 def _daily_charge_kwh(inp: InputModel) -> float:
-    """日总充电量(kWh)：60kW 1枪/台，120kW 2枪/台，480kW 按套×终端。"""
+    """日总充电量(kWh)：60kW 按整桩日均（不因双枪翻倍），120kW 按2，480kW 按套×终端。"""
     return _daily_charge_kwh_from_counts(
         n_pile_60=inp.n_pile_60,
         n_pile_120=inp.n_pile_120,
@@ -5449,7 +5678,7 @@ def compute_projection(inp: InputModel) -> dict[str, Any]:
 
     储能三种模式见 `USAGE_STRATEGY_LOGIC_MD` 与 `_annual_revenue_by_usage()`。
     充电量口径：
-    - 60kW 桩：默认按 **1 枪/台** × 单枪日均电量
+    - 60kW 桩：虽为双枪，但默认按 **整桩日均电量**（等效不按双枪翻倍）
     - 120kW 桩：按 **双枪（2 枪/台）** × 单枪日均电量
     - 480kW 液冷：**套数 × 终端数常量** ×「超充单终端日均」，其中终端数常量见 `ULTRA_CHARGE_TERMINALS_PER_RACK`
     """
@@ -6533,7 +6762,9 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
 
     _html_step_divider()
     _html_flow_zone_open("3. 储能配置")
-    r_col_l, r_col_r = st.columns([4, 1])
+    r_col_l, r_col_mid, r_col_r = st.columns([4, 1, 1])
+    with r_col_mid:
+        st.empty()
     with r_col_r:
         if st.button("刷新第3部分联动", key="sec3_refresh_btn"):
             st.session_state["sec3_refresh_ts"] = pd.Timestamp.now().strftime("%H:%M:%S")
@@ -6671,7 +6902,14 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
         _html_substep_title("3.2 储能运营模式")
         b_target_mode = float(charger_plan.get("k_target", baseline_kva)) if is_mode_b else float(k_target)
         storage_only_scheme = bool(st.session_state.get("sec2_storage_only_scheme", False))
-        if is_mode_b and sec2_storage_selected and b_target_mode <= baseline_kva + 1e-3:
+        # 仅在“确实存在容量缺口”时才判定为仅储能补偿，避免无缺口场景误锁动态增容模式
+        if (
+            is_mode_b
+            and sec2_storage_selected
+            and (not capacity_ok)
+            and gap_m3_advisory > 1e-3
+            and b_target_mode <= baseline_kva + 1e-3
+        ):
             dyn_cov_mode = assess_dynamic_storage_coverage(
                 peak_reduction_kw=_effective_peak_reduction_kw(
                     float(d.get("peak_reduction_kw", 0.0)), sets
@@ -6773,7 +7011,9 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
                 f"未消纳 **{unconsumed_day:.0f}** kWh/日；储能利用率 **{storage_utilization_ratio_mode1:.2%}**。"
             )
             with st.expander("模式一数值计算过程", expanded=False):
-                c_l, c_r = st.columns([4, 1])
+                c_l, c_mid, c_r = st.columns([4, 1, 1])
+                with c_mid:
+                    st.empty()
                 with c_r:
                     if st.button("刷新联动", key="mode1_calc_refresh_btn"):
                         st.session_state["mode1_calc_refresh_ts"] = pd.Timestamp.now().strftime("%H:%M:%S")
@@ -7039,6 +7279,19 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
         "按下方顺序填写：**先完成桩侧施工 → 微网（若需要）→ 储能（若安装）→ 场地与增容物料**；"
         "各工程块之间为虚线分隔，金额按「元」录入、结果以万元展示。"
     )
+    ref_l, ref_mid, ref_r = st.columns([4, 1, 1])
+    with ref_mid:
+        st.empty()
+    with ref_r:
+        if st.button("刷新施工成本联动数据", key="refresh_construction_linked_btn", use_container_width=True):
+            refresh_construction_linked_state(
+                d,
+                farthest_m=farthest_m,
+                n_pile_60=n60,
+                n_pile_120=n120,
+                n_ultra_480=n480,
+            )
+            st.rerun()
     plan_kt_micro = float(
         charger_plan.get("kt", d.get("simultaneity_coeff_kt", SIMULTANEITY_KT_DEFAULT))
     )
@@ -7356,17 +7609,20 @@ def render_input_form(defs: dict[str, Any]) -> tuple[bool, InputModel | None, li
     if install_storage and usage != USAGE_DYNAMIC_CAPACITY and peak < valley:
         errs.append("高峰电价应不小于低谷电价（请检查分时电价）")
     baseline_kva = _transformer_baseline_kva(k_existing, k_remain)
+    req_kva_b_check = required_transformer_kva(
+        _pile_config_total_kw(n60, n120, n480), plan_kx, plan_kt, plan_cos, plan_eta
+    )
+    gap_kva_b_check = charger_capacity_gap_kva(req_kva_b_check, k_remain)
     if (
         plan_mode == CHARGER_CONFIG_MODE_B
         and install_storage
         and str(charger_plan.get("storage_installed", STORAGE_INSTALL_NO)) == STORAGE_INSTALL_YES
+        and gap_kva_b_check > 1e-3
         and float(charger_plan.get("k_target", baseline_kva)) <= baseline_kva + 1e-3
         and assess_dynamic_storage_coverage(
             peak_reduction_kw=_effective_peak_reduction_kw(peak_red_kw, sets),
             storage_sets=sets,
-            req_kva=required_transformer_kva(
-                _pile_config_total_kw(n60, n120, n480), plan_kx, plan_kt, plan_cos, plan_eta
-            ),
+            req_kva=req_kva_b_check,
             kva_remaining=k_remain,
             power_factor=pf,
         )["covers"]
@@ -8152,11 +8408,11 @@ def _render_reverse_target_payback_subsidy(inp: InputModel) -> None:
 
     r1, r2 = st.columns([1, 1])
     with r1:
+        st.caption("需左侧表单校验通过；未改参数时与最近一次正向测算一致。")
+    with r2:
         if st.button("刷新逆向基线", type="secondary", use_container_width=True, key="btn_reverse_refresh"):
             st.session_state.reverse_refresh_pending = True
             st.rerun()
-    with r2:
-        st.caption("需左侧表单校验通过；未改参数时与最近一次正向测算一致。")
 
     for e in st.session_state.get("reverse_refresh_errs") or []:
         st.error(e)

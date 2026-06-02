@@ -82,9 +82,17 @@
 
   "chg_eng_ggd_qty": 1,
 
-  "chg_eng_ggd_unit_yuan": 18000.0,
+  "chg_eng_ggd_breaker_type": "基础断路器",
 
-  "chg_eng_ggd_install_yuan": 1050.0,
+  "chg_eng_ggd_unit_basic_yuan": 15000.0,
+
+  "chg_eng_ggd_unit_mccb_yuan": 30000.0,
+
+  "chg_eng_ggd_unit_acb_yuan": 100000.0,
+
+  "chg_eng_ggd_unit_yuan": 15000.0,
+
+  "chg_eng_ggd_install_yuan": 1250.0,
 
   "chg_eng_meter_qty": 1,
 
@@ -92,39 +100,61 @@
 
   "chg_eng_meter_install_yuan": 105.0,
 
+  "chg_eng_cable_material": "铜缆",
+
   "chg_eng_cable_ac_main_len_m": 0.0,
 
   "chg_eng_cable_ac_main_unit_yuan": 115.0,
+
+  "chg_eng_cable_ac_main_copper_unit_yuan": 115.0,
+
+  "chg_eng_cable_ac_main_aluminum_unit_yuan": 80.0,
 
   "chg_eng_cable_yjvr150_len_m": 0.0,
 
   "chg_eng_cable_yjvr150_unit_yuan": 1030.0,
 
+  "chg_eng_cable_yjvr150_copper_unit_yuan": 1030.0,
+
+  "chg_eng_cable_yjvr150_aluminum_unit_yuan": 720.0,
+
   "chg_eng_cable_yjvr70_len_m": 0.0,
 
   "chg_eng_cable_yjvr70_unit_yuan": 70.0,
 
+  "chg_eng_cable_yjvr70_copper_unit_yuan": 70.0,
+
+  "chg_eng_cable_yjvr70_aluminum_unit_yuan": 48.0,
+
   "chg_eng_pipe50_len_m": 5.0,
 
-  "chg_eng_pipe50_unit_yuan": 3.0,
+  "chg_eng_pipe50_unit_yuan": 5.0,
 
   "chg_eng_pipe100_len_m": 5.0,
 
-  "chg_eng_pipe100_unit_yuan": 60.0,
+  "chg_eng_pipe100_unit_yuan": 15.0,
 
-  "chg_eng_grounding_flat_yuan": 200.0,
+  "chg_eng_grounding_flat_unit_yuan_per_m": 30.0,
 
-  "chg_eng_fire_seal_yuan": 2900.0,
+  "chg_eng_grounding_flat_yuan": 0.0,
+
+  "chg_eng_fire_seal_unit_yuan_per_ton": 7000.0,
+
+  "chg_eng_fire_seal_yuan": 0.0,
 
   "chg_eng_lay_mode": "电缆沟",
 
   "chg_eng_lay_len_m": 0.0,
 
-  "chg_eng_lay_tray_unit_yuan": 240.0,
+  "chg_eng_lay_tray_unit_yuan": 115.0,
 
-  "chg_eng_lay_trench_unit_yuan": 42.0,
+  "chg_eng_lay_trench_concrete_unit_yuan": 800.0,
 
-  "chg_eng_lay_direct_unit_yuan": 42.0,
+  "chg_eng_lay_trench_brick_unit_yuan": 500.0,
+
+  "chg_eng_lay_trench_unit_yuan": 800.0,
+
+  "chg_eng_lay_direct_unit_yuan": 20.0,
 
   "chg_eng_extinguisher_qty": 4,
 
@@ -136,36 +166,36 @@
 
   "chg_eng_microgrid_qty": 1,
 
-  "chg_eng_microgrid_unit_yuan": 6000.0,
+  "chg_eng_microgrid_unit_yuan": 50000.0,
 
   "chg_eng_microgrid_debug_days": 1.0,
 
   "chg_eng_microgrid_debug_unit_yuan": 1000.0,
 
-  "chg_eng_microgrid_equip_yuan": 6000.0,
+  "chg_eng_microgrid_equip_yuan": 50000.0,
 
   "chg_eng_microgrid_debug_yuan": 1000.0,
+
+  "chg_eng_other_install_yuan": 0.0,
 
   "sto_eng_rs485_len_m": 0.0,
   "sto_eng_rs485_unit_yuan": 5.5,
   "sto_eng_rs485_install_yuan": 275.0,
-  "sto_eng_anti_meter_qty": 2,
+  "sto_eng_anti_meter_qty": 1,
   "sto_eng_anti_meter_unit_yuan": 1500.0,
   "sto_eng_anti_meter_install_yuan": 1100.0,
   "sto_eng_cable_yjlhv120_len_m": 0.0,
   "sto_eng_cable_yjlhv120_unit_yuan": 50.0,
   "sto_eng_cable_head_qty": 2,
   "sto_eng_cable_head_unit_yuan": 220.0,
-  "sto_eng_pipe100_len_m": 0.0,
+  "sto_eng_pipe100_len_m": 6.0,
   "sto_eng_pipe100_unit_yuan": 60.0,
-  "sto_eng_grounding_flat_qty": 20,
+  "sto_eng_grounding_flat_qty": 2,
   "sto_eng_grounding_flat_unit_yuan": 22.0,
-  "sto_eng_grounding_rod_qty": 4,
-  "sto_eng_grounding_rod_unit_yuan": 71.0,
   "sto_eng_cabinet_base_qty": 1,
   "sto_eng_cabinet_base_unit_yuan": 3300.0,
   "sto_eng_system_debug_yuan": 5500.0,
-  "sto_eng_other_install_yuan": 2000.0,
+  "sto_eng_other_install_yuan": 5000.0,
 
   "operating_days": 330.0,
 
