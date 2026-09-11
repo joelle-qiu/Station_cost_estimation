@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>重卡超充站 · 10车位投资与IRR测算</title>
+<style>
+  :root {
+    --bg:#F4F6F9; --card:#FFF; --ink:#1A2332; --muted:#5A6577; --line:#D8DEE8;
+    --navy:#1B3A5F; --navy2:#2C5282; --ok:#0E7C66; --warn:#B54708; --flag:#B42318;
+    --al:#0E7C66; --cu:#8A5A12; --chip:#EEF2F7;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); line-height:1.7; font-size:15px; }
+  .wrap { max-width:1120px; margin:0 auto; padding:28px 22px 72px; }
+  header { border-bottom:3px solid var(--navy); padding-bottom:16px; margin-bottom:22px; }
+  h1 { font-size:22px; color:var(--navy); margin:6px 0 8px; line-height:1.35; }
+  .meta { color:var(--muted); font-size:13px; }
+  h2 { font-size:17px; color:var(--navy); border-left:4px solid var(--navy2); padding-left:10px; margin:36px 0 14px; }
+  h3 { font-size:15px; margin:18px 0 8px; color:var(--navy2); }
+  p { margin:0 0 12px; }
+  a { color:var(--navy2); }
+  .verdict { background:var(--card); border:2px solid var(--navy); padding:18px 20px; margin:0 0 18px; }
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0 18px; }
+  .kpi { background:var(--card); border:1px solid var(--line); padding:16px 18px; position:relative; overflow:hidden; }
+  .kpi.al { border-top:4px solid var(--al); }
+  .kpi.cu { border-top:4px solid var(--cu); }
+  .kpi .lab { font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--muted); }
+  .kpi .big { font-size:28px; font-weight:700; color:var(--navy); line-height:1.15; margin:6px 0 10px; font-variant-numeric:tabular-nums; }
+  .kpi dl { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin:0; font-size:13px; }
+  .kpi dt { color:var(--muted); } .kpi dd { margin:0; font-weight:650; font-variant-numeric:tabular-nums; }
+  .flag { background:#FEF3F2; border-left:4px solid var(--flag); padding:12px 14px; margin:12px 0; }
+  .ok { background:#E6F5F1; border-left:4px solid var(--ok); padding:12px 14px; margin:12px 0; }
+  .warn { background:#FFF8F0; border-left:4px solid var(--warn); padding:12px 14px; margin:12px 0; }
+  .card { background:var(--card); border:1px solid var(--line); padding:16px 18px; margin:12px 0; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); font-size:13.5px; margin:10px 0 14px; }
+  th,td { border-bottom:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#EEF2F7; color:var(--navy); font-weight:650; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .muted { color:var(--muted); font-size:12.5px; }
+  .src { font-size:12px; color:var(--muted); background:#F8FAFC; border:1px solid var(--line); padding:12px 14px; margin:12px 0; }
+  .ctrl { background:var(--card); border:1px solid var(--line); padding:14px 16px; margin:12px 0 16px; position:sticky; top:0; z-index:20; box-shadow:0 8px 24px rgba(26,35,50,.06); }
+  .ctrl h3 { margin:0 0 10px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  input, select { width:100%; padding:7px 8px; border:1px solid var(--line); background:#FFF; color:var(--ink); font:inherit; }
+  input:focus, select:focus { outline:2px solid #C5D4E8; border-color:var(--navy2); }
+  .chip { display:inline-block; background:var(--chip); color:var(--navy); font-size:11px; font-weight:700; padding:2px 7px; margin-right:4px; letter-spacing:.04em; }
+  .bar { height:8px; background:#E8EEF5; margin-top:8px; }
+  .bar > i { display:block; height:100%; background:var(--navy2); }
+  .tabs { display:flex; gap:0; margin:12px 0 0; }
+  .tabs button { border:1px solid var(--line); background:#EEF2F7; color:var(--navy); padding:8px 14px; cursor:pointer; font:inherit; }
+  .tabs button.on { background:var(--navy); color:#FFF; border-color:var(--navy); }
+  .note { font-size:12.5px; color:var(--muted); }
+  ul { margin:6px 0 12px; padding-left:20px; } li { margin-bottom:6px; }
+  .toc { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 0; }
+  .toc a { font-size:12.5px; text-decoration:none; background:var(--chip); padding:4px 8px; }
+  footer { margin-top:36px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; }
+  @media (max-width:860px) {
+    .kpis, .grid4, .grid3, .grid2 { grid-template-columns:1fr; }
+    .ctrl { position:static; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">内部投资测算 · 中恒电气报价 2026-08-27 · 不含拿地 · 不含地面硬化 · 10 车位</div>
+  <h1>重卡超充站投资测算：铝排 vs 铜排，10 车位 IRR</h1>
+  <p class="meta">报价来源：杭州中恒电气股份有限公司《充电桩报价单》（含 13% 增值税、含运、质保 5 年）。配置约束：一机双枪 = 两车位；终端合计功率 ≤ 箱变容量。</p>
+  <nav class="toc">
+    <a href="#verdict">结论</a>
+    <a href="#quote">报价拆解</a>
+    <a href="#scheme">两套方案</a>
+    <a href="#turn">周转率</a>
+    <a href="#capex">投资</a>
+    <a href="#irr">IRR</a>
+    <a href="#cf">现金流</a>
+    <a href="#sens">敏感性</a>
+    <a href="#src">口径与来源</a>
+  </nav>
+</header>
+
+<div class="verdict" id="verdict">
+  <p style="margin:0 0 8px;"><span class="chip">给决策的结论</span></p>
+  <p><strong>同等 10 车位、同等 2.4 MW 出力，选铝方案。</strong>箱变价差 25.03 万元，乘上 EPC 1.5 倍后全投资相差约 37.5 万元；铜变的损耗优势每年大约几千到一万元，覆盖不了溢价。功率约束上，5 台 480 kW 一机双枪合计 2400 kW，配 2500 kVA 箱变（≤），这是报价单里能做满的最大合法组合。</p>
+  <p>在「不含拿地、EPC=硬件×1.5 且只含基础土建/地面、不做硬化」的口径下，基准周转（4.5 车次/车位·日）铝方案税后 IRR 约 <strong>51%</strong>、静态回收约 <strong>2.1 年</strong>。这个数看起来高，是因为行业里拖 IRR 的两块——土地和重卡场地硬化——被明确拿掉了。闸门不在设备，在车流：落到行业通行「单枪日充 500 度」，铝/铜税后 IRR 分别约 23% / 17%；再落到 350 度，铜方案税后 IRR 约 6%，<strong>过不了 8% 门槛</strong>。</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi al">
+    <div class="lab">方案 A · 铝变铜排 · 推荐</div>
+    <div class="big" id="kpiAlIrr">—</div>
+    <dl>
+      <dt>全投资 CAPEX</dt><dd id="kpiAlCapex">—</dd>
+      <dt>税前 IRR</dt><dd id="kpiAlIrrPre">—</dd>
+      <dt>税后静态回收</dt><dd id="kpiAlPb">—</dd>
+      <dt>NPV @ 8%（税后）</dt><dd id="kpiAlNpv">—</dd>
+    </dl>
+  </div>
+  <div class="kpi cu">
+    <div class="lab">方案 B · 铜变铜排</div>
+    <div class="big" id="kpiCuIrr">—</div>
+    <dl>
+      <dt>全投资 CAPEX</dt><dd id="kpiCuCapex">—</dd>
+      <dt>税前 IRR</dt><dd id="kpiCuIrrPre">—</dd>
+      <dt>税后静态回收</dt><dd id="kpiCuPb">—</dd>
+      <dt>NPV @ 8%（税后）</dt><dd id="kpiCuNpv">—</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="ctrl">
+  <h3>测算台 · 改参数后 KPI / 现金流即时重算</h3>
+  <div class="grid4">
+    <div><label>配置（功率 ≤ 箱变）</label>
+      <select id="cfg">
+        <option value="2500-480" selected>主方案 2500 kVA + 5×480 kW（2400≤2500）</option>
+        <option value="2000-400">轻配 2000 kVA + 5×400 kW（2000≤2000）</option>
+      </select>
+    </div>
+    <div><label>周转率（车次 / 车位·日）</label><input id="turns" type="number" min="1" max="12" step="0.1" value="4.5" /></div>
+    <div><label>单次补能（kWh / 车次）</label><input id="sess" type="number" min="80" max="500" step="10" value="200" /></div>
+    <div><label>充电服务费（元 / kWh）</label><input id="fee" type="number" min="0.1" max="1.2" step="0.05" value="0.40" /></div>
+    <div><label>到户购电均价（元 / kWh）</label><input id="elec" type="number" min="0.3" max="1.2" step="0.05" value="0.70" /></div>
+    <div><label>线损 / 站损（%）</label><input id="loss" type="number" min="0" max="10" step="0.5" value="4" /></div>
+    <div><label>交钥匙总价倍数（含设备 / 相对硬件，默认 1.5）</label><input id="epc" type="number" min="1" max="2.5" step="0.1" value="1.5" /></div>
+    <div><label>地面硬化补记（万元，默认定 0）</label><input id="hard" type="number" min="0" max="300" step="10" value="0" /></div>
+    <div><label>评价年限（年）</label><input id="years" type="number" min="5" max="15" step="1" value="10" /></div>
+    <div><label>折现率 / NPV（%）</label><input id="disc" type="number" min="4" max="16" step="1" value="8" /></div>
+    <div><label>所得税率（%）</label><input id="tax" type="number" min="0" max="25" step="1" value="25" /></div>
+    <div><label>Y1 / Y2 爬坡</label>
+      <select id="ramp">
+        <option value="70-90" selected>Y1 70% · Y2 90% · 此后 100%</option>
+        <option value="100">不做爬坡，各年 100%</option>
+      </select>
+    </div>
+  </div>
+  <p class="note" style="margin:10px 0 0;">电费按「对车平进平出、运营商吃损耗」处理：度电毛利 = 服务费 − 损耗 × 购电价。不含土地、不含需量电费。质保期 5 年内运维按硬件 2%，此后 4%。台子上的倍数是<strong>含设备的交钥匙总价</strong>：1.5 = 硬件 1.0 + 安装土建 0.5，不是工程包再乘 1.5。</p>
+</div>
+
+<h2 id="quote">一、中恒报价拆解</h2>
+<div class="card">
+  <p>报价日 2026-08-27，30 天有效；价格含 13% 增值税、含运输；交货约合同后 45 天；质保按 5 年。报价单原数量是示意 4 台桩，本测算按 <strong>10 车位 = 5 台一机双枪</strong> 重配，箱变仍为 1 台。</p>
+  <table>
+    <thead><tr><th>序号</th><th>名称</th><th>规格</th><th>单价（元）</th><th>原报价数量</th><th>10 车位用量</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>2000 kVA 直流移相脉冲箱变</td><td>1 进 1 出 1 计量 + 变 + 低压出线 + 外壳（铝变铜排）</td><td class="num">431,200</td><td class="num">1</td><td>轻配用 1 台</td></tr>
+      <tr><td>2</td><td>2000 kVA 直流移相脉冲箱变</td><td>同上（铜变铜排）</td><td class="num">669,000</td><td class="num">1</td><td>轻配用 1 台</td></tr>
+      <tr><td>3</td><td>2500 kVA 直流移相脉冲箱变</td><td>铝变铜排</td><td class="num">475,700</td><td class="num">1</td><td>主方案 1 台</td></tr>
+      <tr><td>4</td><td>2500 kVA 直流移相脉冲箱变</td><td>铜变铜排</td><td class="num">726,000</td><td class="num">1</td><td>主方案 1 台</td></tr>
+      <tr><td>5</td><td>400 kW DCDC 一机双枪</td><td>D2D400T</td><td class="num">74,500</td><td class="num">4</td><td>轻配 5 台</td></tr>
+      <tr><td>6</td><td>480 kW DCDC 一机双枪</td><td>D2D480T</td><td class="num">79,200</td><td class="num">4</td><td>主方案 5 台</td></tr>
+    </tbody>
+  </table>
+  <div class="warn">序号 2「铜变铜排 2000 kVA」单价 669,000 元，合计写成 689,000 元，差 2 万元，按<strong>单价</strong>入账。铝/铜指箱变绕组（铝变铜排 vs 铜变铜排），充电桩本身报价未分铜铝。</div>
+</div>
+
+<h2 id="scheme">二、10 车位两套方案（功率 ≤ 箱变）</h2>
+<div class="card">
+  <p>规则：1 台终端 = 2 把枪 = 2 个车位 → 10 车位固定 <strong>5 台终端、10 把枪</strong>。直流移相脉冲箱变出直流，桩为 DCDC，容量按 kVA ≈ kW 校核。</p>
+  <table>
+    <thead>
+      <tr><th>项</th><th>主方案（推荐）</th><th>轻配对照</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>车位 / 终端 / 枪</td><td>10 / 5 / 10</td><td>10 / 5 / 10</td></tr>
+      <tr><td>单桩功率</td><td>480 kW 一机双枪</td><td>400 kW 一机双枪</td></tr>
+      <tr><td>终端合计</td><td><strong>2,400 kW</strong></td><td><strong>2,000 kW</strong></td></tr>
+      <tr><td>箱变</td><td>2,500 kVA</td><td>2,000 kVA</td></tr>
+      <tr><td>校核</td><td>2400 ≤ 2500，负载率 96%</td><td>2000 ≤ 2000，满配，无裕量</td></tr>
+      <tr><td>不可行组合</td><td colspan="2">5×480 kW = 2400 kW ＞ 2000 kVA，禁止配 2000 箱变</td></tr>
+    </tbody>
+  </table>
+  <div class="grid2">
+    <div>
+      <h3>铝方案硬件（主方案）</h3>
+      <table>
+        <tbody>
+          <tr><td>2500 kVA 铝变铜排</td><td class="num">475,700</td></tr>
+          <tr><td>D2D480T × 5</td><td class="num">396,000</td></tr>
+          <tr><th>硬件小计</th><th class="num">871,700</th></tr>
+          <tr><td>交钥匙合计 ×1.5</td><td class="num">1,307,550</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>铜方案硬件（主方案）</h3>
+      <table>
+        <tbody>
+          <tr><td>2500 kVA 铜变铜排</td><td class="num">726,000</td></tr>
+          <tr><td>D2D480T × 5</td><td class="num">396,000</td></tr>
+          <tr><th>硬件小计</th><th class="num">1,122,000</th></tr>
+          <tr><td>交钥匙合计 ×1.5</td><td class="num">1,683,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="note">交钥匙 1.5 倍 = 中恒设备 1.0 + 安装/基础土建 0.5。不含硬化、不含土地、不含长距离外线。若后续补重卡硬化，用上方「地面硬化补记」把 80–150 万加回去。</p>
+</div>
+
+<h2 id="turn">三、全国重卡充电周转率（2026-08 检索）</h2>
+<div class="card">
+  <p>没有一份官方公报直接给「全国重卡枪均日周转车次」。能交叉的是三类口径：利用率（充电小时/24h）、单枪日充电量、车次/车位·日。本测算把周转率定义为 <strong>车次 / 车位·日</strong>（一枪一位）。</p>
+  <table>
+    <thead><tr><th>口径</th><th>数字</th><th>怎么用</th><th>来源性质</th></tr></thead>
+    <tbody>
+      <tr><td>公共桩整体利用率</td><td>不足 10%（一线更低）</td><td>含乘用车，只能当全国下限，不能当重卡专用站均值</td><td>能源局保有量语境 + 行业研究，2026-04</td></tr>
+      <tr><td>重卡站盈亏利用率门槛</td><td>年均稳定 &gt; <strong>15%</strong></td><td>行业共识阈值，不是已实现均值</td><td>汽车总站网 / 多家转述，2026-03</td></tr>
+      <tr><td>重卡专用站合理区间</td><td>利用率 18%–25%；日充电时长 8–10 h（后一数字偏乐观，与 18–25% 不完全自洽）</td><td>绑定车队、港口矿区才摸得到上沿</td><td>2026 专用设施需求预测类报告</td></tr>
+      <tr><td>行业通行收入测算锚</td><td>单枪日充 <strong>500 度</strong>、服务费 0.3 元；20 枪年服务费约 110 万</td><td>媒体和桩企测算最常用，偏保守</td><td>汽车总站网 2026-03</td></tr>
+      <tr><td>运营较好的重卡超充</td><td>单枪日充 500–1000 度；叮叮案例用 600 度、服务费 0.4 元</td><td>高频车队 / 枢纽</td><td>叮叮充电桩运营测算</td></tr>
+      <tr><td>成都金牛枢纽案例</td><td>站日均 1.7–2.2 万度（若 20 枪 → 约 850–1100 度/枪）</td><td>优质点，不作全国平均</td><td>叮叮，个案</td></tr>
+      <tr><td>需求侧车次</td><td>日均 <strong>3–5 车次</strong>、单次 150–300 度</td><td>与「周转率」同量纲，本测算基准取中沿</td><td>场景布局实证分析转述</td></tr>
+      <tr><td>苏州物流园箱变案例</td><td>16 车位日均 90 台次 = <strong>5.6 车次/位</strong></td><td>封闭园，偏高</td><td>中盟电气项目宣传</td></tr>
+      <tr><td>北川百兆瓦超充（标杆）</td><td>126 车位日均 700 车 ≈ <strong>5.6 车次/位</strong></td><td>兆瓦超充 + 锁车订单，不是平均站</td><td>汽车总站网（华为/徐工）</td></tr>
+      <tr><td>港口极端值</td><td>有报道利用率 72%、日均 6.8 车次</td><td>只作上限，禁止当均值</td><td>头条转述个案</td></tr>
+    </tbody>
+  </table>
+  <h3>本测算采用的三档（可在台子上改）</h3>
+  <table>
+    <thead><tr><th>情景</th><th>周转率</th><th>单次电量</th><th>单枪日充电</th><th>10 车位日充电</th><th>相对 2.4 MW 利用率</th><th>对应什么站</th></tr></thead>
+    <tbody>
+      <tr><td>低</td><td>3.0 车次</td><td>200 kWh</td><td>600 度</td><td>6,000 度</td><td>10.4%</td><td>无绑定、普通物流园，接近公共桩上限</td></tr>
+      <tr><td><strong>基准（默认）</strong></td><td><strong>4.5 车次</strong></td><td>200 kWh</td><td>900 度</td><td>9,000 度</td><td><strong>15.6%</strong></td><td>对齐「15% 盈亏门槛」+「3–5 车次」中沿</td></tr>
+      <tr><td>行业通行锚</td><td>2.5 车次</td><td>200 kWh</td><td>500 度</td><td>5,000 度</td><td>8.7%</td><td>媒体最常用收入假设，偏保守</td></tr>
+      <tr><td>高</td><td>6.5 车次</td><td>200 kWh</td><td>1,300 度</td><td>13,000 度</td><td>22.6%</td><td>港口短倒 / 矿区 / 锁车队，接近案例 5.6–7 车次</td></tr>
+    </tbody>
+  </table>
+  <div class="ok">物理核对：480 kW 一机双枪同时两车约 240 kW/枪；200 度补能约 50 分钟。4.5 车次 × 50 分钟 = 3.75 小时，利用率 3.75/24 ≈ 15.6%，与 9,000 / (2400×24) 一致。</div>
+  <p class="muted">单次 200 度：2024 年电动重卡平均带电量约 405 kWh，主流 282 / 350 / 423 kWh；短倒补能多为 20%–80% 或中途补电，取 200 度作中位，不用 400 度满充满放。</p>
+</div>
+
+<h2 id="capex">四、投资结构</h2>
+<div class="card">
+  <div class="ok">
+    <p style="margin:0 0 8px;"><strong>0.5 和 1.5 是同一笔账，不是少算了工程。</strong>业内说「EPC 是硬件的 1.5 倍」，指的是<strong>含设备的交钥匙总价</strong>；表里那行 0.5 倍，是把设备剥掉以后剩下的安装 + 基础土建。两者相加：1.0 + 0.5 = 1.5。</p>
+    <p style="margin:0;">按本次范围（基础土建和地面、不硬化、不拿地），工程增量实际大约 <strong>0.4–0.6 倍硬件</strong>，交钥匙总价 <strong>1.4–1.6 倍</strong>。默认取 1.5 / 0.5。若把「EPC」理解成不含设备的工程包再乘 1.5，总投资会变成 2.5 倍，那已经是含硬化、雨棚、消防、较长外线的完整站，超出本次口径。</p>
+  </div>
+  <table>
+    <thead><tr><th>科目</th><th class="num">铝 · 主方案</th><th class="num">铜 · 主方案</th><th>口径</th></tr></thead>
+    <tbody>
+      <tr><td>硬件（中恒设备）</td><td class="num">87.17 万</td><td class="num">112.20 万</td><td>箱变 + 5 台桩，含税含运</td></tr>
+      <tr><td>安装 + 基础土建（不含设备）</td><td class="num">43.59 万</td><td class="num">56.10 万</td><td>硬件 ×0.5；高压短接入、低压/直流电缆、基础、调试</td></tr>
+      <tr><td><strong>交钥匙合计（EPC 总价）</strong></td><td class="num"><strong>130.76 万</strong></td><td class="num"><strong>168.30 万</strong></td><td>硬件 ×1.5 = 设备 1.0 + 工程 0.5</td></tr>
+      <tr><td>土地</td><td class="num">0</td><td class="num">0</td><td>按本次要求不计</td></tr>
+      <tr><td>地面硬化</td><td class="num">0（可补记）</td><td class="num">0（可补记）</td><td>重卡轴载硬化常见 80–150 万，不在 1.5 倍里</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>对照</th><th>工程包 / 硬件</th><th>交钥匙总价 / 硬件</th><th>铝方案全投资</th><th>什么时候用</th></tr></thead>
+    <tbody>
+      <tr><td>本次默认（基础、不硬化）</td><td>0.5</td><td><strong>1.5</strong></td><td>130.76 万</td><td>短接入、只做基础和地面</td></tr>
+      <tr><td>行业拆账区间</td><td>0.4–0.6</td><td>1.4–1.6</td><td>122–139 万</td><td>5 桩级重卡站公开拆账</td></tr>
+      <tr><td>完整站（硬化+雨棚+消防）</td><td>0.8–1.2</td><td>1.8–2.2</td><td>157–192 万</td><td>可运营的重卡场，不是本次</td></tr>
+      <tr><td>误把工程包也按 1.5</td><td>1.5</td><td>2.5</td><td>218 万</td><td>重复加计，不采用</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">依据：与本次几乎同规模的「5 台 400 kW + 2000 kVA」公开拆账，设备+箱变约 60 万，高压短接入 10 万 + 低压 15–30 万，工程/设备 = 0.42–0.67，总价/设备 = 1.42–1.67。10 台 400 kW 站若不含硬化附加，工程增量约 0.37；把场地基础算进去则靠近 0.5。中恒箱变已含「1 进 1 出 1 计量 + 低压出线」，现场还要付的是接入、电缆、基础和调试，不是再买一套箱变。</p>
+  <div class="flag">这不是「一座完整重卡站只要 130 万」。缺的是硬化、长距离外线、消防雨棚、营业设施。行业文章里中等规模站 150–200 万，往往还不含土地。管委会千万级资产闸门，指的是配储、扩容后的可出表节点，不是这个轻交钥匙包。</div>
+</div>
+
+<h2 id="irr">五、IRR 与回收（随台子变动）</h2>
+<div class="card">
+  <p id="irrNote" class="note"></p>
+  <table>
+    <thead>
+      <tr><th>指标</th><th class="num">铝方案</th><th class="num">铜方案</th></tr>
+    </thead>
+    <tbody id="irrBody"></tbody>
+  </table>
+  <h3>三档周转对照（其他参数用当前台子，只改车次）</h3>
+  <table>
+    <thead><tr><th>周转</th><th>单枪日电量</th><th class="num">铝税后 IRR</th><th class="num">铝税后回收</th><th class="num">铜税后 IRR</th><th class="num">铜税后回收</th></tr></thead>
+    <tbody id="scenBody"></tbody>
+  </table>
+</div>
+
+<h2 id="cf">六、十年税后现金流</h2>
+<div class="tabs">
+  <button class="on" id="tabAl" type="button">铝方案</button>
+  <button id="tabCu" type="button">铜方案</button>
+</div>
+<div class="card" style="margin-top:0;border-top:none;">
+  <table>
+    <thead>
+      <tr>
+        <th>年</th><th class="num">负荷</th><th class="num">年充电量 kWh</th><th class="num">度电毛利</th><th class="num">OPEX</th>
+        <th class="num">EBITDA</th><th class="num">税</th><th class="num">自由现金流</th>
+      </tr>
+    </thead>
+    <tbody id="cfBody"></tbody>
+  </table>
+</div>
+
+<h2 id="sens">七、该看的风险，而不是再压设备价</h2>
+<div class="grid2">
+  <div class="card">
+    <h3>对 IRR 最敏感的三件事</h3>
+    <ol>
+      <li><strong>真实周转</strong>：从 4.5 降到行业锚 2.5 车次（500 度/枪），铝税后 IRR 从约 51% 掉到约 23%；再降到约 1.6 车次才贴上 8% 税后门槛。</li>
+      <li><strong>地面硬化</strong>：补记 100 万后，基准铝税后 IRR 约 30%、回收约 3.3 年；若同时用 500 度锚，税后 IRR 约 11%，开始接近门槛。</li>
+      <li><strong>服务费</strong>：干线公共站已有 0.2 元甚至更低的价格战。服务费从 0.40 降到 0.25，毛利几乎腰斩。</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>本次刻意没进模型的成本</h3>
+    <ul>
+      <li>土地出让 / 租金（按任务排除）。</li>
+      <li>重卡回转场地硬化、雨棚、消防、营业房。</li>
+      <li>外线工程、报装、需量/容量电费（2030 年前集中式充换电或可免需量，落地看当地）。</li>
+      <li>补贴、广告、司机驿站等增值（不进保底账）。</li>
+      <li>虚拟电厂 / 峰谷套利（可增厚，但不作为过会前提）。</li>
+    </ul>
+  </div>
+</div>
+<div class="warn">铜方案没有财务优势。2500 kVA 铜变比铝变贵 25.03 万，EPC 后约 37.5 万；按年充电 328.5 万度、损耗差 0.3% 估算，电费节省约 0.7 万/年，静态要四五十年才平。只有腐蚀环境、业主招标指定全铜、或远期把箱变长期打满时，才值得溢价。</div>
+
+<h2 id="src">八、口径、公式与来源</h2>
+<div class="src">
+  <p><strong>收入</strong>：年充电量 = 车位数 × 周转率 × 单次 kWh × 365 × 当年爬坡。对车电价 = 购电均价（平进平出）+ 服务费。运营商吃损耗：度电毛利 = 服务费 − 损耗率 × 购电价。默认 0.40 − 4% × 0.70 = <strong>0.372 元/kWh</strong>。</p>
+  <p><strong>OPEX</strong>：人工 15 万/年（10 车位 1 值守 + 远程，不是 3 班满配）；杂费 3 万；运维质保期内硬件 2%、Y6 起 4%。电费不进 OPEX（已在毛利里扣损耗）。</p>
+  <p><strong>资本</strong>：第 0 年 −CAPEX；直线折旧 10 年、残值 5% 在期末回收；所得税 25%，亏损向后结转；IRR / NPV 为全投资、无杠杆。</p>
+  <p><strong>报价</strong>：杭州中恒电气《充电桩报价单》，2026-08-27，文件 <code>重卡超充站/杭州中恒电气报价单-远景能源.docx</code>。</p>
+  <p><strong>周转与价格</strong>：汽车总站网 2026-03（15% 门槛、500 度锚、北川 700 车/日）；叮叮充电桩运营测算（0.3–0.4 元服务费、500–1000 度）；中盟电气苏州园 16 位/90 台次；新能源重卡平均带电量约 405 kWh（2024）；公共桩利用率不足 10%（2026-04 保有量讨论）。服务费区间 0.3–0.5 元取 0.40 作基准，不是承诺能收到。</p>
+  <p><strong>政策背景（不进数字）</strong>：十一部门新能源重卡实施方案 2030 保有量 &gt;160 万、引导约 3000 个重卡充换电站；交规划发〔2025〕42 号集中式充换电 2030 年前或可免需量。</p>
+</div>
+
+<footer>
+  远景虚拟电厂 / 储充资产腿 · 测算日 2026-08-27 · 打开即算，可离线。改台子上的数字，上面的 KPI、IRR 表和现金流会一起变。
+</footer>
+</div>
+
+<script>
+(function () {
+  const Q = {
+    trafo: { 2000: { al: 431200, cu: 669000 }, 2500: { al: 475700, cu: 726000 } },
+    pile: { 400: 74500, 480: 79200 }
+  };
+  const LABOR = 150000, OTHER = 30000, RES = 0.05, SPOTS = 10, N_PILE = 5;
+
+  const $ = (id) => document.getElementById(id);
+  const wan = (n) => (n / 10000).toFixed(2) + " 万";
+  const cny = (n) => Math.round(n).toLocaleString("zh-CN");
+  const pct = (x) => (isFinite(x) ? (x * 100).toFixed(1) + "%" : "—");
+
+  function irr(cfs) {
+    let r = 0.12;
+    for (let i = 0; i < 90; i++) {
+      let npv = 0, d = 0;
+      for (let t = 0; t < cfs.length; t++) {
+        const den = Math.pow(1 + r, t);
+        npv += cfs[t] / den;
+        if (t) d -= t * cfs[t] / (den * (1 + r));
+      }
+      if (Math.abs(d) < 1e-12) break;
+      const n = r - npv / d;
+      if (!isFinite(n) || n <= -0.99) return NaN;
+      if (Math.abs(n - r) < 1e-10) return n;
+      r = n;
+    }
+    return r;
+  }
+  function npv(cfs, r) {
+    return cfs.reduce((s, cf, t) => s + cf / Math.pow(1 + r, t), 0);
+  }
+  function payback(cfs) {
+    let acc = 0;
+    for (let t = 0; t < cfs.length; t++) {
+      acc += cfs[t];
+      if (t > 0 && acc >= 0) return (t - 1) + (cfs[t] - (acc - 0)) / cfs[t];
+    }
+    return NaN;
+  }
+  function loadOf(y, ramp) {
+    if (ramp === "100") return 1;
+    if (y === 1) return 0.7;
+    if (y === 2) return 0.9;
+    return 1;
+  }
+  function cfgOf() {
+    const v = $("cfg").value.split("-");
+    return { kva: +v[0], kw: +v[1] };
+  }
+  function hwOf(mat) {
+    const c = cfgOf();
+    return Q.trafo[c.kva][mat] + Q.pile[c.kw] * N_PILE;
+  }
+  function inputs() {
+    const c = cfgOf();
+    return {
+      kva: c.kva, kw: c.kw,
+      pSta: N_PILE * c.kw,
+      turns: +$("turns").value,
+      sess: +$("sess").value,
+      fee: +$("fee").value,
+      elec: +$("elec").value,
+      loss: +$("loss").value / 100,
+      epc: +$("epc").value,
+      hard: +$("hard").value * 10000,
+      years: +$("years").value,
+      disc: +$("disc").value / 100,
+      tax: +$("tax").value / 100,
+      ramp: $("ramp").value
+    };
+  }
+  function model(mat, p, turns) {
+    const hw = hwOf(mat);
+    const capex = hw * p.epc + p.hard;
+    const t = turns == null ? p.turns : turns;
+    const kwhFull = SPOTS * t * p.sess * 365;
+    const margin = p.fee - p.loss * p.elec;
+    const years = p.years;
+    const dep = (capex - capex * RES) / years;
+    const cfsPre = [-capex], cfsAft = [-capex];
+    const rows = [];
+    let nol = 0;
+    for (let y = 1; y <= years; y++) {
+      const load = loadOf(y, p.ramp);
+      const kwh = kwhFull * load;
+      const gp = kwh * margin;
+      const maint = (y <= 5 ? 0.02 : 0.04) * hw;
+      const opex = LABOR + OTHER + maint;
+      const ebitda = gp - opex;
+      const ebit = ebitda - dep;
+      let taxPaid = 0;
+      const taxable = ebit + nol;
+      if (taxable < 0) { nol = taxable; taxPaid = 0; }
+      else { taxPaid = taxable * p.tax; nol = 0; }
+      const resAdd = y === years ? capex * RES : 0;
+      const cfPre = ebitda + resAdd;
+      const cfAft = ebitda - taxPaid + resAdd;
+      cfsPre.push(cfPre); cfsAft.push(cfAft);
+      rows.push({ y, load, kwh, gp, opex, ebitda, taxPaid, cfAft });
+    }
+    const util = (SPOTS * t * p.sess) / (p.pSta * 24);
+    return {
+      mat, hw, capex, margin, kwhFull, util, t, rows,
+      irrPre: irr(cfsPre), irrAft: irr(cfsAft),
+      pbPre: payback(cfsPre), pbAft: payback(cfsAft),
+      npvAft: npv(cfsAft, p.disc),
+      y3: rows[Math.min(2, rows.length - 1)]
+    };
+  }
+
+  let show = "al";
+  function paint() {
+    const p = inputs();
+    const al = model("al", p);
+    const cu = model("cu", p);
+    $("kpiAlIrr").textContent = "税后 IRR  " + pct(al.irrAft);
+    $("kpiCuIrr").textContent = "税后 IRR  " + pct(cu.irrAft);
+    $("kpiAlCapex").textContent = wan(al.capex);
+    $("kpiCuCapex").textContent = wan(cu.capex);
+    $("kpiAlIrrPre").textContent = pct(al.irrPre);
+    $("kpiCuIrrPre").textContent = pct(cu.irrPre);
+    $("kpiAlPb").textContent = isFinite(al.pbAft) ? al.pbAft.toFixed(2) + " 年" : "期内未回收";
+    $("kpiCuPb").textContent = isFinite(cu.pbAft) ? cu.pbAft.toFixed(2) + " 年" : "期内未回收";
+    $("kpiAlNpv").textContent = wan(al.npvAft);
+    $("kpiCuNpv").textContent = wan(cu.npvAft);
+
+    const gunDay = p.turns * p.sess;
+    const staDay = gunDay * SPOTS;
+    $("irrNote").textContent =
+      "当前：" + p.kva + " kVA + 5×" + p.kw + " kW（合计 " + p.pSta + " kW" +
+      (p.pSta <= p.kva ? " ≤ 箱变，合法）" : " ＞ 箱变，非法，请改配置）") +
+      " · 周转 " + p.turns + " 车次 · 单枪日 " + gunDay.toFixed(0) + " 度 · 站日 " + staDay.toFixed(0) +
+      " 度 · 利用率 " + pct(al.util) + " · 度电毛利 " + al.margin.toFixed(3) + " 元。";
+
+    const row = (k, a, b) => "<tr><td>" + k + "</td><td class='num'>" + a + "</td><td class='num'>" + b + "</td></tr>";
+    $("irrBody").innerHTML = [
+      row("硬件", wan(al.hw), wan(cu.hw)),
+      row("全投资 CAPEX", wan(al.capex), wan(cu.capex)),
+      row("达产年充电量", cny(al.kwhFull) + " kWh", cny(cu.kwhFull) + " kWh"),
+      row("达产年 EBITDA", wan(al.y3.ebitda), wan(cu.y3.ebitda)),
+      row("税前 IRR", pct(al.irrPre), pct(cu.irrPre)),
+      row("税后 IRR", pct(al.irrAft), pct(cu.irrAft)),
+      row("税前静态回收", isFinite(al.pbPre) ? al.pbPre.toFixed(2) + " 年" : "—", isFinite(cu.pbPre) ? cu.pbPre.toFixed(2) + " 年" : "—"),
+      row("税后静态回收", isFinite(al.pbAft) ? al.pbAft.toFixed(2) + " 年" : "—", isFinite(cu.pbAft) ? cu.pbAft.toFixed(2) + " 年" : "—"),
+      row("NPV @ " + (p.disc * 100).toFixed(0) + "% 税后", wan(al.npvAft), wan(cu.npvAft))
+    ].join("");
+
+    const scen = [
+      { n: "低 3.0", t: 3 },
+      { n: "行业锚 2.5（500度）", t: 500 / p.sess },
+      { n: "基准 4.5", t: 4.5 },
+      { n: "高 6.5", t: 6.5 }
+    ];
+    $("scenBody").innerHTML = scen.map(s => {
+      const a = model("al", p, s.t), c = model("cu", p, s.t);
+      return "<tr><td>" + s.n + "</td><td>" + (s.t * p.sess).toFixed(0) + " 度</td>" +
+        "<td class='num'>" + pct(a.irrAft) + "</td><td class='num'>" + (isFinite(a.pbAft) ? a.pbAft.toFixed(2) + " 年" : "—") + "</td>" +
+        "<td class='num'>" + pct(c.irrAft) + "</td><td class='num'>" + (isFinite(c.pbAft) ? c.pbAft.toFixed(2) + " 年" : "—") + "</td></tr>";
+    }).join("");
+
+    const m = show === "al" ? al : cu;
+    $("cfBody").innerHTML = m.rows.map(r =>
+      "<tr><td>Y" + r.y + "</td><td class='num'>" + (r.load * 100).toFixed(0) + "%</td>" +
+      "<td class='num'>" + cny(r.kwh) + "</td><td class='num'>" + wan(r.gp) + "</td>" +
+      "<td class='num'>" + wan(r.opex) + "</td><td class='num'>" + wan(r.ebitda) + "</td>" +
+      "<td class='num'>" + wan(r.taxPaid) + "</td><td class='num'>" + wan(r.cfAft) + "</td></tr>"
+    ).join("");
+  }
+
+  ["cfg","turns","sess","fee","elec","loss","epc","hard","years","disc","tax","ramp"].forEach(id => {
+    $(id).addEventListener("input", paint);
+    $(id).addEventListener("change", paint);
+  });
+  $("tabAl").onclick = () => { show = "al"; $("tabAl").className = "on"; $("tabCu").className = ""; paint(); };
+  $("tabCu").onclick = () => { show = "cu"; $("tabCu").className = "on"; $("tabAl").className = ""; paint(); };
+  paint();
+})();
+</script>
+</body>
+</html>

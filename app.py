@@ -40,7 +40,7 @@ except ImportError:
 # Streamlit：页面配置（必须尽早调用）
 # ----------------------------
 st.set_page_config(
-    page_title="工商业储充场站成本收益测算工具",
+    page_title="储充配储筛站与测算",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -4449,8 +4449,8 @@ def _inject_global_style() -> None:
     padding: 0 !important;
     margin: 0 !important;
   }
-  /* 左右主分栏卡片（Streamlit 列容器）——首行二分栏通常为参数/结果 */
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) > div[data-testid="column"] {
+  /* ③ 左右分栏卡：只作用于「恰好两列」的第一组横向块，避免误伤工作台三按钮 */
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) > div[data-testid="column"] {
     background-color: #ffffff;
     border: 1px solid #dae0ea;
     border-radius: 6px;
@@ -4459,24 +4459,23 @@ def _inject_global_style() -> None:
     max-height: min(92vh, 920px);
     overflow-y: auto;
   }
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) > div[data-testid="column"]:first-child {
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) > div[data-testid="column"]:first-child {
     background-color: #f8fafc;
     flex: 1.35 1 0% !important;
     min-width: 52% !important;
   }
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) > div[data-testid="column"]:last-child {
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) > div[data-testid="column"]:last-child {
     flex: 1 1 0% !important;
     min-width: 42% !important;
   }
-  /* 右侧结果区 metric 标签允许换行，避免 480kW / 储能 等被截断 */
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) > div[data-testid="column"]:last-child [data-testid="stMetricLabel"] p {
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) > div[data-testid="column"]:last-child [data-testid="stMetricLabel"] p {
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: unset !important;
     line-height: 1.25 !important;
     font-size: 0.82rem !important;
   }
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) > div[data-testid="column"]:last-child [data-testid="stMetricValue"] {
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) > div[data-testid="column"]:last-child [data-testid="stMetricValue"] {
     font-size: 1.15rem !important;
   }
   hr.ui-step-divider,
@@ -4687,13 +4686,13 @@ def _inject_global_style() -> None:
     border-radius: 0 !important;
     padding: 0 !important;
   }
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) [data-testid="stCaptionContainer"] p,
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) [data-testid="stCaptionContainer"] {
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) [data-testid="stCaptionContainer"] p,
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) [data-testid="stCaptionContainer"] {
     color: var(--ui-amber-text) !important;
     font-size: 0.8rem !important;
     line-height: 1.45 !important;
   }
-  div[data-testid="stHorizontalBlock"]:nth-of-type(1) [data-testid="stCaptionContainer"] strong {
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(2):last-child) [data-testid="stCaptionContainer"] strong {
     color: var(--ui-amber-text-strong) !important;
     font-weight: 700;
   }
@@ -4811,6 +4810,43 @@ def _inject_global_style() -> None:
   .kt-microgrid-banner.kt-microgrid-ok p {
     color: #64748b;
     font-weight: 500;
+  }
+  /* 工作台导航（3 或 4 枚等宽按钮） */
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) > div[data-testid="column"],
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) > div[data-testid="column"]:first-child,
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) > div[data-testid="column"]:last-child {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) {
+    gap: 8px !important;
+    margin: 0 0 12px !important;
+  }
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) button {
+    width: 100% !important;
+    height: 42px !important;
+    border-radius: 6px !important;
+    font-weight: 650 !important;
+    font-size: 0.86rem !important;
+  }
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) button[kind="primary"],
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) [data-testid="stBaseButton-primary"] {
+    background: #1e3a5f !important;
+    border: 1px solid #1e3a5f !important;
+    color: #ffffff !important;
+  }
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) button[kind="secondary"],
+  div[data-testid="stHorizontalBlock"]:nth-of-type(1):has(> div[data-testid="column"]:nth-child(3)):not(:has(> div[data-testid="column"]:nth-child(2):last-child)) [data-testid="stBaseButton-secondary"] {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
   }
 </style>
         """,
@@ -8832,9 +8868,49 @@ def _render_forward_estimate_body(inp: InputModel) -> None:
         st.caption("可保存多套参数以便横向对比 IRR / 回本。")
 
 
+WB_PAGES = ("0 流程说明", "① 高价值筛站", "② 配储评分测算", "③ 单站精算")
+
+
+def _render_workbench_nav() -> str:
+    """等宽按钮切换工作台。默认落在流程说明。"""
+    if st.session_state.get("workbench_page") not in WB_PAGES:
+        st.session_state.workbench_page = WB_PAGES[0]
+    cur = st.session_state.workbench_page
+    picked = None
+    cols = st.columns(len(WB_PAGES), gap="small")
+    for col, name in zip(cols, WB_PAGES):
+        with col:
+            if st.button(
+                name,
+                key=f"wb_nav_{name}",
+                type="primary" if name == cur else "secondary",
+                use_container_width=True,
+            ):
+                picked = name
+    if picked and picked != cur:
+        st.session_state.workbench_page = picked
+        st.rerun()
+    return str(st.session_state.workbench_page)
+
+
 def main() -> None:
     _inject_global_style()
     _init_session_state()
+
+    from ui_pipeline import render_overview_page, render_scoring_page, render_screening_page
+
+    page = _render_workbench_nav()
+    if page.startswith("0"):
+        render_overview_page()
+        return
+    if page.startswith("①"):
+        st.title("配储筛站 · 摸底表导入")
+        render_screening_page()
+        return
+    if page.startswith("②"):
+        st.title("配储评分 · 手填曲线结论")
+        render_scoring_page()
+        return
 
     st.title("工商业储充场站成本收益测算工具")
     _html_note(

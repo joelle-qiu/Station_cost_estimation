@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>储能配置筛站与虚拟电厂组盘 · 流程与工具体系</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F4F6F9; --paper: #fff; --ink: #0B1F3A; --muted: #5A6573; --line: #D5DCE6;
+      --navy: #0B1F3A; --blue: #1E4E8C; --green: #1F6B48; --amber: #8A6A22;
+      --red: #9B2C3A; --dash: #C45C26;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg); color: var(--ink); line-height: 1.55;
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 24px 18px 72px; }
+    .k { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--amber); }
+    h1 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin: 6px 0 10px; }
+    h2 { font-size: 17px; margin: 32px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+    p, li { font-size: 13.5px; }
+    .lead { font-size: 14px; color: var(--ink); max-width: 980px; }
+    .lead + .lead { color: var(--muted); margin-top: 8px; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 14px;
+      background: var(--paper); border: 1px solid var(--line); margin: 16px 0 10px;
+      font-size: 13px; color: var(--muted);
+    }
+    .legend b { color: var(--ink); font-weight: 600; }
+    .sw { display: inline-block; width: 16px; height: 11px; border: 1.5px solid var(--navy); background: #fff; vertical-align: -1px; margin-right: 4px; border-radius: 2px; }
+    .sw.d { width: 9px; height: 9px; transform: rotate(45deg); border-radius: 0; margin: 0 7px 0 4px; }
+    .sw.stop { background: #F6E8EA; border-color: var(--red); }
+    .sw.pend { background: #FBF1EA; border-style: dashed; border-color: var(--dash); }
+    .sw.vpp { background: #E8F0FA; border-color: var(--blue); }
+    .sw.note { width: 16px; height: 16px; border-radius: 50%; background: var(--amber); border: 0; color: #fff; font-size: 10px; font-weight: 700; text-align: center; line-height: 16px; vertical-align: -3px; }
+    .board { background: var(--paper); border: 1px solid var(--line); padding: 6px; overflow-x: auto; }
+    svg.logic { display: block; width: 100%; height: auto; min-width: 1040px; }
+    .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 12px; }
+    .notes article {
+      background: var(--paper); border: 1px solid var(--line); padding: 10px 12px;
+      display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start;
+    }
+    .notes .num {
+      width: 22px; height: 22px; border-radius: 50%; background: var(--amber); color: #fff;
+      font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .notes p { font-size: 13px; color: var(--ink); }
+    table.t { width: 100%; border-collapse: collapse; background: var(--paper); font-size: 13px; }
+    table.t th, table.t td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+    table.t th { background: #EEF2F6; font-size: 12px; font-weight: 600; }
+    table.t td.tool { font-size: 12.5px; }
+    code { font-family: var(--mono); font-size: 11.5px; background: #EEF2F6; padding: 1px 5px; }
+    .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .rules article { background: var(--paper); border: 1px solid var(--line); padding: 14px 16px; }
+    .rules h3 { font-size: 14px; margin-bottom: 8px; }
+    .rules p { font-size: 13px; margin-bottom: 8px; color: var(--ink); }
+    .rules p:last-child { margin-bottom: 0; }
+    footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+    @media (max-width: 900px) {
+      .notes, .rules { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="k">Station_cost_estimation · 2026-09-11</p>
+    <h1>储能配置筛站与虚拟电厂组盘：流程与工具体系</h1>
+    <p class="lead">
+      本文说明从客户收资到能否配储、以及如何把场站纳入虚拟电厂组盘的完整做法。充电站与厂区、园区负荷使用同一套流程，不按「有没有充电桩」分成两条线。客户只填写一张摸底表，表中蓝色列为虚拟电厂组盘所用，绿色列为储能投资筛站所用。
+    </p>
+    <p class="lead">
+      下图从左到右、从上到下阅读。圆角框是工作步骤，第二行写明本步使用的表格或工具。菱形是必须作出的判断。红色框表示本站的储能投资工作在此结束。虚线框是尚未接入的产品评估环节，方法补齐之前按备注跳过。右侧蓝色区域与左侧并行：页签①一旦跑完，虚拟电厂组盘即可开始，不需要等到配储结论。
+    </p>
+
+    <div class="legend">
+      <span><span class="sw"></span><b>圆角框</b>工作步骤（第二行是表格或工具）</span>
+      <span><span class="sw d"></span><b>菱形</b>判断</span>
+      <span><span class="sw stop"></span><b>红框</b>本站停止新配储能</span>
+      <span><span class="sw pend"></span><b>虚线框</b>产品评估，尚未接入</span>
+      <span><span class="sw vpp"></span><b>蓝色区域</b>虚拟电厂组盘</span>
+      <span><span class="sw note">1</span><b>编号</b>对应图下方注意事项</span>
+    </div>
+
+    <div class="board" id="logic">
+      <svg class="logic" viewBox="0 0 1180 1008" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ttl">
+        <title id="ttl">储能配置筛站与虚拟电厂组盘逻辑图</title>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 1.2 L9 5 L0 8.8 Z" fill="#0B1F3A" />
+          </marker>
+          <marker id="arrG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 1.2 L9 5 L0 8.8 Z" fill="#1F6B48" />
+          </marker>
+          <marker id="arrR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 1.2 L9 5 L0 8.8 Z" fill="#9B2C3A" />
+          </marker>
+          <marker id="arrB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 1.2 L9 5 L0 8.8 Z" fill="#1E4E8C" />
+          </marker>
+        </defs>
+
+        <rect x="14" y="12" width="744" height="984" rx="8" fill="#F6FAF7" stroke="#D5DCE6" />
+        <rect x="770" y="12" width="396" height="984" rx="8" fill="#F3F7FB" stroke="#D5DCE6" />
+        <text x="32" y="36" fill="#1F6B48" font-size="13" font-weight="700">储能投资：筛站、评分与精算</text>
+        <text x="788" y="36" fill="#1E4E8C" font-size="13" font-weight="700">虚拟电厂：资源组盘（并行）</text>
+
+        <ellipse cx="340" cy="64" rx="78" ry="20" fill="#0B1F3A" />
+        <text x="340" y="69" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">开始</text>
+        <line x1="340" y1="84" x2="340" y2="104" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <rect x="240" y="106" width="200" height="54" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.6" />
+        <text x="340" y="126" text-anchor="middle" font-size="13" font-weight="700">1 发放摸底表</text>
+        <text x="340" y="145" text-anchor="middle" font-size="11" fill="#5A6573">表格：场站资源摸底收资表</text>
+        <circle cx="452" cy="118" r="9" fill="#8A6A22" />
+        <text x="452" y="122" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">1</text>
+
+        <line x1="340" y1="160" x2="340" y2="176" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <rect x="240" y="178" width="200" height="54" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.6" />
+        <text x="340" y="198" text-anchor="middle" font-size="13" font-weight="700">2 客户填写工作表</text>
+        <text x="340" y="217" text-anchor="middle" font-size="11" fill="#5A6573">填「1-公司概况」「2-资源清单」</text>
+        <circle cx="452" cy="190" r="9" fill="#8A6A22" />
+        <text x="452" y="194" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">2</text>
+
+        <line x1="340" y1="232" x2="340" y2="248" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <rect x="240" y="250" width="200" height="54" rx="6" fill="#E6F3EC" stroke="#1F6B48" stroke-width="1.8" />
+        <text x="340" y="270" text-anchor="middle" font-size="13" font-weight="700">3 工作台 · 页签①筛站</text>
+        <text x="340" y="289" text-anchor="middle" font-size="11" fill="#5A6573">导入摸底表，并匹配电价库</text>
+        <circle cx="452" cy="262" r="9" fill="#8A6A22" />
+        <text x="452" y="266" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">3</text>
+
+        <line x1="340" y1="304" x2="340" y2="322" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <polygon points="340,326 416,376 340,426 264,376" fill="#fff" stroke="#0B1F3A" stroke-width="1.8" />
+        <text x="340" y="370" text-anchor="middle" font-size="13" font-weight="700">本站颜色</text>
+        <text x="340" y="388" text-anchor="middle" font-size="11" fill="#5A6573">红黄绿灰？</text>
+
+        <line x1="264" y1="376" x2="214" y2="376" stroke="#9B2C3A" stroke-width="1.6" marker-end="url(#arrR)" />
+        <text x="236" y="364" text-anchor="middle" font-size="11" font-weight="700" fill="#9B2C3A">红或灰</text>
+        <rect x="28" y="346" width="184" height="60" rx="6" fill="#F6E8EA" stroke="#9B2C3A" stroke-width="1.6" />
+        <text x="120" y="368" text-anchor="middle" font-size="12.5" font-weight="700" fill="#9B2C3A">停止收集曲线</text>
+        <text x="120" y="386" text-anchor="middle" font-size="11" fill="#5A6573">不新装储能柜</text>
+        <circle cx="48" cy="358" r="9" fill="#8A6A22" />
+        <text x="48" y="362" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">4</text>
+
+        <line x1="340" y1="426" x2="340" y2="450" stroke="#1F6B48" stroke-width="1.6" marker-end="url(#arrG)" />
+        <text x="388" y="444" font-size="11" font-weight="700" fill="#1F6B48">绿或黄</text>
+        <circle cx="430" cy="438" r="9" fill="#8A6A22" />
+        <text x="430" y="442" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">5</text>
+
+        <rect x="240" y="452" width="200" height="54" rx="6" fill="#FBF1EA" stroke="#C45C26" stroke-width="1.6" stroke-dasharray="5 3" />
+        <text x="340" y="472" text-anchor="middle" font-size="13" font-weight="700" fill="#C45C26">产品专业评估</text>
+        <text x="340" y="491" text-anchor="middle" font-size="11" fill="#C45C26">尚未接入，本步先跳过</text>
+        <circle cx="452" cy="464" r="9" fill="#8A6A22" />
+        <text x="452" y="468" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">6</text>
+
+        <line x1="340" y1="506" x2="340" y2="522" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <rect x="240" y="524" width="200" height="54" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.6" />
+        <text x="340" y="544" text-anchor="middle" font-size="13" font-weight="700">4 收集曲线与电费单</text>
+        <text x="340" y="563" text-anchor="middle" font-size="11" fill="#5A6573">只向绿色、黄色站点索取</text>
+
+        <line x1="340" y1="578" x2="340" y2="594" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <rect x="240" y="596" width="200" height="54" rx="6" fill="#E6F3EC" stroke="#1F6B48" stroke-width="1.8" />
+        <text x="340" y="616" text-anchor="middle" font-size="13" font-weight="700">5 工作台 · 页签②评分</text>
+        <text x="340" y="635" text-anchor="middle" font-size="11" fill="#5A6573">手填峰负荷、时长、空窗</text>
+        <circle cx="452" cy="608" r="9" fill="#8A6A22" />
+        <text x="452" y="612" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">7</text>
+        <circle cx="220" cy="608" r="9" fill="#8A6A22" />
+        <text x="220" y="612" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">8</text>
+
+        <line x1="340" y1="650" x2="340" y2="666" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <polygon points="340,670 408,716 340,762 272,716" fill="#fff" stroke="#0B1F3A" stroke-width="1.8" />
+        <text x="340" y="712" text-anchor="middle" font-size="13" font-weight="700">配储分型</text>
+        <text x="340" y="728" text-anchor="middle" font-size="11" fill="#5A6573">A 至 E</text>
+
+        <line x1="408" y1="716" x2="478" y2="716" stroke="#9B2C3A" stroke-width="1.6" marker-end="url(#arrR)" />
+        <text x="444" y="706" text-anchor="middle" font-size="11" font-weight="700" fill="#9B2C3A">D 或 E</text>
+        <rect x="482" y="688" width="160" height="56" rx="6" fill="#F6E8EA" stroke="#9B2C3A" stroke-width="1.6" />
+        <text x="562" y="710" text-anchor="middle" font-size="13" font-weight="700" fill="#9B2C3A">不新装储能柜</text>
+        <text x="562" y="728" text-anchor="middle" font-size="11" fill="#5A6573">改为有序用电或增容</text>
+
+        <line x1="340" y1="762" x2="340" y2="786" stroke="#1F6B48" stroke-width="1.6" marker-end="url(#arrG)" />
+        <text x="392" y="780" font-size="11" font-weight="700" fill="#1F6B48">A、B 或 C</text>
+
+        <polygon points="340,790 422,838 340,886 258,838" fill="#fff" stroke="#0B1F3A" stroke-width="1.8" />
+        <text x="340" y="832" text-anchor="middle" font-size="13" font-weight="700">粗算回收期</text>
+        <text x="340" y="850" text-anchor="middle" font-size="11" fill="#5A6573">是否不超过五年</text>
+        <circle cx="236" cy="838" r="9" fill="#8A6A22" />
+        <text x="236" y="842" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">9</text>
+
+        <line x1="422" y1="838" x2="478" y2="838" stroke="#9B2C3A" stroke-width="1.6" marker-end="url(#arrR)" />
+        <text x="450" y="828" text-anchor="middle" font-size="11" font-weight="700" fill="#9B2C3A">超过五年</text>
+        <rect x="482" y="810" width="160" height="56" rx="6" fill="#F6E8EA" stroke="#9B2C3A" stroke-width="1.6" />
+        <text x="562" y="832" text-anchor="middle" font-size="13" font-weight="700" fill="#9B2C3A">不进入上会精算</text>
+        <text x="562" y="850" text-anchor="middle" font-size="11" fill="#5A6573">补贴与 V2G 不计入保底</text>
+
+        <line x1="340" y1="886" x2="340" y2="908" stroke="#1F6B48" stroke-width="1.6" marker-end="url(#arrG)" />
+        <text x="368" y="902" font-size="11" font-weight="700" fill="#1F6B48">不超过五年</text>
+
+        <rect x="240" y="912" width="200" height="50" rx="6" fill="#E6F3EC" stroke="#1F6B48" stroke-width="1.8" />
+        <text x="340" y="932" text-anchor="middle" font-size="13" font-weight="700">6 工作台 · 页签③精算</text>
+        <text x="340" y="950" text-anchor="middle" font-size="11" fill="#5A6573">五步财务，作为上会数字</text>
+
+        <line x1="440" y1="937" x2="478" y2="937" stroke="#0B1F3A" stroke-width="1.6" marker-end="url(#arr)" />
+
+        <rect x="482" y="912" width="160" height="50" rx="6" fill="#fff" stroke="#0B1F3A" stroke-width="1.6" />
+        <text x="562" y="932" text-anchor="middle" font-size="13" font-weight="700">7 微网策略勾选</text>
+        <text x="562" y="950" text-anchor="middle" font-size="11" fill="#5A6573">EGC 配置页</text>
+        <circle cx="654" cy="922" r="9" fill="#8A6A22" />
+        <text x="654" y="926" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">10</text>
+
+        <line x1="440" y1="277" x2="818" y2="277" stroke="#1E4E8C" stroke-width="1.6" marker-end="url(#arrB)" />
+        <text x="630" y="267" text-anchor="middle" font-size="11" font-weight="700" fill="#1E4E8C">页签①同时给出粗可调容量</text>
+
+        <rect x="818" y="250" width="188" height="54" rx="6" fill="#E8F0FA" stroke="#1E4E8C" stroke-width="1.8" />
+        <text x="912" y="270" text-anchor="middle" font-size="13" font-weight="700">计算粗可调容量</text>
+        <text x="912" y="289" text-anchor="middle" font-size="11" fill="#5A6573">页签①结果中的「粗可调kW」</text>
+
+        <line x1="912" y1="304" x2="912" y2="328" stroke="#1E4E8C" stroke-width="1.6" marker-end="url(#arrB)" />
+
+        <rect x="818" y="330" width="188" height="54" rx="6" fill="#fff" stroke="#1E4E8C" stroke-width="1.6" />
+        <text x="912" y="350" text-anchor="middle" font-size="13" font-weight="700">填写内部评估</text>
+        <text x="912" y="369" text-anchor="middle" font-size="11" fill="#5A6573">表格：摸底表「3-内部评估」</text>
+        <circle cx="1016" cy="342" r="9" fill="#8A6A22" />
+        <text x="1016" y="346" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">2</text>
+
+        <line x1="912" y1="384" x2="912" y2="408" stroke="#1E4E8C" stroke-width="1.6" marker-end="url(#arrB)" />
+
+        <rect x="818" y="410" width="188" height="54" rx="6" fill="#fff" stroke="#1E4E8C" stroke-width="1.6" />
+        <text x="912" y="430" text-anchor="middle" font-size="13" font-weight="700">对接省级平台</text>
+        <text x="912" y="449" text-anchor="middle" font-size="11" fill="#5A6573">工具：各省虚拟电厂规划页</text>
+        <circle cx="1016" cy="422" r="9" fill="#8A6A22" />
+        <text x="1016" y="426" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">11</text>
+
+        <line x1="912" y1="464" x2="912" y2="500" stroke="#1E4E8C" stroke-width="1.6" marker-end="url(#arrB)" />
+        <ellipse cx="912" cy="524" rx="96" ry="22" fill="#1E4E8C" />
+        <text x="912" y="529" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">进入虚拟电厂组盘</text>
+
+        <text x="912" y="572" text-anchor="middle" font-size="12" fill="#5A6573">红色站点仍可按节点聚合。</text>
+        <text x="912" y="592" text-anchor="middle" font-size="12" fill="#5A6573">灰色站点按已有储能组单元。</text>
+        <text x="912" y="612" text-anchor="middle" font-size="12" fill="#5A6573">能否调控只填在蓝色列。</text>
+        <text x="912" y="632" text-anchor="middle" font-size="12" fill="#5A6573">配储颜色判定不看能否调控。</text>
+      </svg>
+    </div>
+
+    <h2>图上注意事项</h2>
+    <p class="lead" style="margin-bottom:10px;">编号与逻辑图上的圆点一一对应。执行和评审时按完整句子理解，不要只看框里的短标题。</p>
+    <div class="notes">
+      <article>
+        <div class="num">1</div>
+        <p>充电站、厂区和园区使用同一张《场站资源摸底收资表》、同一套筛站流程，不因为场站没有充电桩就换另一套办法。</p>
+      </article>
+      <article>
+        <div class="num">2</div>
+        <p>发给客户的只有「1-公司概况」和「2-资源清单」。工作表「3-内部评估」只在内部填写，用于虚拟电厂组盘，不要随收资表发出。</p>
+      </article>
+      <article>
+        <div class="num">3</div>
+        <p>页签①根据摸底表和电价库给出红、黄、绿、灰，只回答「要不要去收集该站曲线」，并不给出配柜数量，也不给出可上会的投资回报。</p>
+      </article>
+      <article>
+        <div class="num">4</div>
+        <p>红色表示不适合新配储能，灰色表示表中已填现有储能、改为存量优化。这两类都停止收集曲线、不新装储能柜；虚拟电厂仍可以把它们纳入组盘。</p>
+      </article>
+      <article>
+        <div class="num">5</div>
+        <p>绿色和黄色只表示值得去收集曲线，不能理解为已经批准配储。三班连续生产、以夜间充电为主、或适用充电设施免收需量电费的站点，摸底表仍可能显示为绿色，但曲线未必支撑配柜。</p>
+      </article>
+      <article>
+        <div class="num">6</div>
+        <p>产品侧专业评估方法尚未写入工具，虚线框只是预留位置。方法补齐之前跳过本步，由人工阅读曲线后，再进入页签②。</p>
+      </article>
+      <article>
+        <div class="num">7</div>
+        <p>页签②不接收、不保存曲线文件。需要人工从曲线上读出三个数后手填：日峰负荷（千瓦）、变压器超载或尖峰持续时长（小时）、低谷时段可以给储能充电的空闲时长（小时）。</p>
+      </article>
+      <article>
+        <div class="num">8</div>
+        <p>电价库里的峰、谷电价，只适用于仍由电网代理购电、并且执行政府核定固定峰谷的用户。已经直接进入电力市场的用户，页签①会标星，页签②必须手填实际零售或现货价格，不能套用电价库里的政府峰谷价做保底测算。</p>
+      </article>
+      <article>
+        <div class="num">9</div>
+        <p>分型为 D 或 E 的站点不新装储能柜。分型为 A、B、C 的站点，还须满足粗算回收期不超过五年，才进入页签③。车辆向电网放电的收益、以及各类补贴，都不计入这道闸门的保底收益。</p>
+      </article>
+      <article>
+        <div class="num">10</div>
+        <p>微网控制器策略勾选（EGC 配置页）用于落地时选定功能模块，不会回过来改变页签①的红黄绿灰，也不能代替页签③的财务数字。</p>
+      </article>
+      <article>
+        <div class="num">11</div>
+        <p>省级虚拟电厂平台对接、邀约、基线和结算，不在本套 Streamlit 工作台内完成，需要使用各省虚拟电厂规划页和当地调度、交易规则。</p>
+      </article>
+    </div>
+
+    <h2>分步说明：表格、工具、输入与结论</h2>
+    <table class="t">
+      <thead>
+        <tr>
+          <th style="width:12%">步骤</th>
+          <th style="width:22%">使用的表格</th>
+          <th style="width:20%">使用的工具</th>
+          <th style="width:23%">本步开始前需要具备</th>
+          <th style="width:23%">本步可以得出的结论</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1 发放摸底表</td>
+          <td class="tool">《场站资源摸底收资表》（空白件）</td>
+          <td>页签①上的下载按钮，或直接发送 <code>doc/场站资源摸底收资表.xlsx</code></td>
+          <td>客户公司名称、联系人、拟摸底的场站名单</td>
+          <td>客户收到可以填写的收资表。本步还没有筛站结论。</td>
+        </tr>
+        <tr>
+          <td>2 客户填写</td>
+          <td class="tool">同一文件中的「1-公司概况」「2-资源清单」。蓝色列填虚拟电厂相关字段，绿色列填变压器、日电量、场地、购电方式。</td>
+          <td>客户用 Excel 填写。不要发放「3-内部评估」。</td>
+          <td>场站负责人能够提供户号、变压器容量和日均用电或充电量</td>
+          <td>形成蓝、绿两列齐全的资源底账。本步不能决定是否配储。</td>
+        </tr>
+        <tr>
+          <td>3 页签①筛站</td>
+          <td class="tool">客户填好的摸底表，读取「2-资源清单」</td>
+          <td>Streamlit 工作台页签「① 高价值筛站」，后台匹配 <code>config/tariff_library.json</code> 电价库</td>
+          <td>省、市填写正确；购电方式已勾选「电网代理购电」或「已直接入市」</td>
+          <td>每站红、黄、绿或灰，以及虚拟电厂粗可调容量。本步不配柜，不算投资回报。</td>
+        </tr>
+        <tr>
+          <td>4 收集曲线</td>
+          <td class="tool">不使用新的标准表格。向场站索取关口或充电功率曲线，以及近月电费单。</td>
+          <td>人工收集。工作台没有曲线上传口。</td>
+          <td>页签①结果为绿色或黄色的站点名单</td>
+          <td>得到可供阅读的曲线和电费单。红色、灰色站点不进入本步。</td>
+        </tr>
+        <tr>
+          <td>产品评估（预留）</td>
+          <td class="tool">待产品方法确定后补充</td>
+          <td>尚未接入，无工具</td>
+          <td>—</td>
+          <td>当前不能自动识别「摸底为绿、曲线并不适合配储」的站点。</td>
+        </tr>
+        <tr>
+          <td>5 页签②评分</td>
+          <td class="tool">不上传曲线。把从曲线读出的三个数填入页签②表单。</td>
+          <td>Streamlit 工作台页签「② 配储评分测算」。柜型固定为 125 千瓦 / 262 千瓦时。</td>
+          <td>日峰负荷、超载或尖峰时长、谷段空闲时长；变压器容量；峰谷电价（已入市必须手填）</td>
+          <td>分型 A 至 E、建议柜数、粗略投资与粗算回收期，以及是否满足不超过五年。本步数字不能直接用于上会。</td>
+        </tr>
+        <tr>
+          <td>6 页签③精算</td>
+          <td class="tool">页签③内的五步表单（场站、充电桩、储能、施工、运营），不是摸底表。</td>
+          <td>Streamlit 工作台页签「③ 单站精算」，单价默认来自 <code>config/cost_defaults.json</code></td>
+          <td>页签②分型为 A、B 或 C，并且粗算回收期不超过五年</td>
+          <td>项目收益、回收期和投资分项，作为上会使用的财务数字。本步不能代替电网报装或现场勘察。</td>
+        </tr>
+        <tr>
+          <td>7 微网策略勾选</td>
+          <td class="tool">EGC 策略模块配置页上的勾选清单</td>
+          <td><code>outputs/vpp_egc_strategy_modules_20260908.html</code></td>
+          <td>已确定的配储分型，以及现场可调节的充电枪、储能、光伏情况</td>
+          <td>落地时需要打开的控制器功能。本步不改变筛站颜色，也不产生财务数字。</td>
+        </tr>
+        <tr>
+          <td>虚拟电厂组盘</td>
+          <td class="tool">摸底表蓝色列，以及同一文件的「3-内部评估」</td>
+          <td>页签①给出的粗可调容量；各省虚拟电厂规划页 <code>outputs/vpp_plan_*.html</code></td>
+          <td>户号、能否调控、可持续小时数等蓝色列信息已经填写</td>
+          <td>可聚合容量的量级和资源类型。邀约、基线和结算不在本工作台完成。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>工具清单</h2>
+    <table class="t">
+      <thead>
+        <tr>
+          <th>名称</th>
+          <th>形态</th>
+          <th>存放位置</th>
+          <th>在哪些步骤使用</th>
+          <th>用来做什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>《场站资源摸底收资表》</td>
+          <td>Excel 对客表</td>
+          <td><code>Station_cost_estimation/doc/场站资源摸底收资表.xlsx</code></td>
+          <td>步骤 1、2、3，以及虚拟电厂组盘</td>
+          <td>客户一次填写，同时服务虚拟电厂组盘和储能筛站。「1-公司概况」「2-资源清单」发给客户；「3-内部评估」留在内部。</td>
+        </tr>
+        <tr>
+          <td>摸底表生成器</td>
+          <td>Python 脚本</td>
+          <td><code>_gen_intake_xlsx.py</code></td>
+          <td>改表结构时使用，不是日常筛站步骤</td>
+          <td>按统一列名重新生成对客 Excel，避免手工改表头。</td>
+        </tr>
+        <tr>
+          <td>储充筛站与测算工作台</td>
+          <td>Streamlit 网页，三个页签在同一个 <code>app.py</code></td>
+          <td><code>Station_cost_estimation/</code>，启动命令 <code>streamlit run app.py</code></td>
+          <td>步骤 3、5、6</td>
+          <td>页签①导入摸底表做红黄绿灰；页签②手填曲线结论做分型与粗回本；页签③做单站五步精算。</td>
+        </tr>
+        <tr>
+          <td>电价库</td>
+          <td>JSON 配置</td>
+          <td><code>config/tariff_library.json</code></td>
+          <td>页签①自动匹配；页签②在未入市时预填峰谷价</td>
+          <td>按省、市和购电方式给出政府核定峰谷。已入市用户不得用库内峰谷价做保底测算。</td>
+        </tr>
+        <tr>
+          <td>工程与设备默认单价</td>
+          <td>JSON 配置</td>
+          <td><code>config/cost_defaults.json</code></td>
+          <td>页签③</td>
+          <td>为五步精算提供默认单价，可在界面中改。</td>
+        </tr>
+        <tr>
+          <td>EGC 策略模块配置页</td>
+          <td>静态 HTML</td>
+          <td>VirtualGrid <code>outputs/vpp_egc_strategy_modules_20260908.html</code></td>
+          <td>步骤 7</td>
+          <td>按分型勾选微网控制器功能，供工程落地。不参与筛站判定。</td>
+        </tr>
+        <tr>
+          <td>各省虚拟电厂规划页</td>
+          <td>静态 HTML</td>
+          <td>VirtualGrid <code>outputs/vpp_plan_*.html</code></td>
+          <td>虚拟电厂组盘、平台对接</td>
+          <td>说明该省调度与交易平台的对接要求。不替代本工作台的筛站和测算。</td>
+        </tr>
+        <tr>
+          <td>业务口径备忘</td>
+          <td>Markdown</td>
+          <td><code>Station_cost_estimation/doc/MEMORY.md</code></td>
+          <td>改口径、对数字时查阅</td>
+          <td>记录已拍板的柜型、五年闸门、电价规则和收益公式，避免口头约定丢失。</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>页签①颜色与页签②分型怎么读</h2>
+    <div class="rules">
+      <article>
+        <h3>红、黄、绿、灰</h3>
+        <p>红色：场地不能放置储能柜，或充电与厂区规模、变压器容量都明显偏小，或充电站分时价差弱且可能免收需量电费，因此不新配储能，也不收集曲线。</p>
+        <p>黄色：有配储价值，但独立户号、分时电价或关键字段尚未确认，需要收集曲线后再判断。</p>
+        <p>绿色：独立户号和规模或分时条件相对充分，值得收集曲线。绿色不是投资批复，曲线仍可能证明不该配柜。</p>
+        <p>灰色：摸底表里已经填写现有储能，储能投资侧按存量优化、不新增柜子；虚拟电厂仍可按储能资源组单元。</p>
+      </article>
+      <article>
+        <h3>分型 A 至 E</h3>
+        <p>A：容量型，用于较短的尖峰、且不适用免收需量电费的场景，主要靠削减需量或动态增容。</p>
+        <p>B：价差型，依赖峰谷价差，并且低谷时段要有足够空窗给储能充电。</p>
+        <p>C：混合型，同时做削峰和峰谷（或峰谷供桩）。</p>
+        <p>D：不新装储能柜，改为有序用电或只做微网控制。E：超载时间过长，只考虑增容、不配储。推荐柜型固定为 125 千瓦 / 262 千瓦时。</p>
+      </article>
+    </div>
+
+    <footer>
+      内部流程与工具体系说明，不作为发给客户的材料。文件位置
+      <code>Station_cost_estimation/doc/配储与VPP工具全览.html</code>，
+      副本 <code>VirtualGrid/outputs/vpp_storage_screening_flow.html</code>。
+    </footer>
+  </div>
+</body>
+</html>

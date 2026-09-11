@@ -21,7 +21,7 @@ alwaysApply: true
 - **样式**：浅色工业极简主题；**琥珀黄**（`--ui-amber-*`）统一备注/统计/联动/总结/说明块；`st.warning`/`st.error`/`st.success` 仍用于告警与通过态；运营参数区 `.op-param-box`。
 
 ## 业务逻辑权威来源
-- 口径、场景假设与用户确认过的规则摘要见根目录 **`MEMORY.md`**（含五步流程、第四部分施工分项、第五部分运营预览）。
+- 口径、场景假设与用户确认过的规则摘要见 **`doc/MEMORY.md`**（含五步流程、第四部分施工分项、第五部分运营预览）。
 - **默认表单初值**来自 `config/cost_defaults.json`（在线编辑见 `render_site_defaults_editor()`）。
 - 需要改计算公式或分项拆分：优先修改 `compute_projection()` / `_annual_revenue_by_usage()`，再同步 `render_storage_operations_preview()` 与结果表（`revenue_breakdown` 等）。
 
@@ -44,4 +44,4 @@ alwaysApply: true
 - 不要改写用户全局 git 配置；禁止使用破坏性 git 指令（除非用户明确要求）。
 
 ## 与用户沟通
-- 对「电价」「枪数」「双枪」「纯峰谷套利是否扣低谷购电成本」等易造成歧义的变更，改代码前先对照 `MEMORY.md`，必要时在项目内补充注释或在 `MEMORY.md` 更新一句结论。
+- 对「电价」「枪数」「双枪」「纯峰谷套利是否扣低谷购电成本」等易造成歧义的变更，改代码前先对照 `doc/MEMORY.md`，必要时在项目内补充注释或在 `doc/MEMORY.md` 更新一句结论。

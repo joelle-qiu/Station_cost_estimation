@@ -1,0 +1,260 @@
+{
+  "as_of": "2026-09-11",
+  "legend": {
+    "star": "⭐ = 该用户类型已执行市场化/动态分时（15min 或零售曲线），库内政府峰谷价不能当保底套利测算。",
+    "pending": "【政策即将变动需复核】= 仍可暂用库内价筛站，但时段或入市规则即将变，上会前必须对当月文件。"
+  },
+  "note": "收益测算只允许用「电网代理购电 + 政府核定固定峰谷」这一档的库内峰/谷。已入市主体自 2026-03-01 起，国家规则（发改能源规〔2025〕1656号）不再人为规定分时水平和时段。库内单价随月代购公告变动。",
+  "regions": [
+    {
+      "id": "liaoning",
+      "label": "辽宁（含沈阳）",
+      "province": "辽宁",
+      "cities": ["沈阳", "大连", "鞍山", "抚顺", "本溪", "丹东", "锦州", "营口", "阜新", "辽阳", "盘锦", "铁岭", "朝阳", "葫芦岛"],
+      "has_tou": true,
+      "market_no_gov_tou": true,
+      "peak_yuan": 0.82,
+      "flat_yuan": 0.58,
+      "valley_yuan": 0.38,
+      "spread_yuan": 0.44,
+      "demand_yuan_per_kw_month": 32.0,
+      "capacity_yuan_per_kva_month": 22.0,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "07:30–10:30、16:00–21:00",
+      "valley_hours": "11:30–12:30、22:00–次日05:00",
+      "ratio": "尖:峰:平:谷=1.875:1.5:1:0.5",
+      "price_anchor": "代理购电示意；时段官方（辽发改 2023-09-01）",
+      "price_confidence": "仅代理购电可用。度电按2026年代购走低估算，价差贴近0.45闸门。入市勿用此价。",
+      "source": "辽发改分时机制；《2026年辽宁省电力市场交易工作方案》：现货连续结算试运行期间批发侧电能量/输配/线损不执行计划性峰谷；1656号 2026-03-01；第一财经/国家能源局转述辽宁已列入入市取消固定分时落地省份",
+      "agent": {
+        "user_label": "电网代理购电工商业（≥100kVA）",
+        "form_label": "政府核定固定峰谷",
+        "marker": "",
+        "usable_for_spread": true
+      },
+      "market": {
+        "user_label": "已直接入市 / 售电零售",
+        "form_label": "市场化动态分时（现货 15min 出清）",
+        "marker": "⭐",
+        "usable_for_spread": false
+      }
+    },
+    {
+      "id": "guangdong",
+      "label": "广东电网（不含深圳）",
+      "province": "广东",
+      "cities": ["广州", "珠海", "佛山", "中山", "东莞", "惠州", "江门", "肇庆", "汕头", "湛江", "茂名", "韶关", "清远", "阳江", "揭阳", "潮州", "汕尾", "河源", "梅州", "云浮"],
+      "has_tou": true,
+      "market_no_gov_tou": true,
+      "peak_yuan": 1.1002,
+      "flat_yuan": 0.6586,
+      "valley_yuan": 0.2674,
+      "spread_yuan": 0.8328,
+      "demand_yuan_per_kw_month": 36.1,
+      "capacity_yuan_per_kva_month": 22.6,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "10:00–12:00、14:00–19:00",
+      "valley_hours": "00:00–08:00（现行粤发改价格〔2021〕331号）",
+      "ratio": "峰:平:谷=1.7:1:0.38；尖峰=峰×1.25（7–9月及广州高温日）",
+      "price_anchor": "2026-04 广东电网代购表 · 两部制 1–10kV 珠三角五市",
+      "price_confidence": "仅代理购电可用。锚仍是2026-04官方表。9月官方表已发布（珠三角代购价环比约+6.5%），完整用户侧峰谷数字未下到，上会须换9月表。",
+      "source": "广东电网2026年4月代理购电公告（energydc 数字化）；9月公告见媒体转述，请在南网在线/广东电网企业信息公开下原表。粤发改价格〔2021〕331号；2026-05午间谷征求意见未印发；1656号",
+      "agent": {
+        "user_label": "电网代理购电：大工业、普通工业专变强制分时",
+        "form_label": "政府核定固定峰谷",
+        "marker": "【政策即将变动需复核】",
+        "pending_detail": "2026-05 征求意见拟新增 12:00–13:00 谷段，尚未印发。101kVA 及以上一般工商业可选分时。",
+        "usable_for_spread": true
+      },
+      "market": {
+        "user_label": "已直接入市 / 售电零售",
+        "form_label": "市场化动态分时（中长期曲线 + 现货规则）",
+        "marker": "⭐",
+        "usable_for_spread": false
+      }
+    },
+    {
+      "id": "shenzhen",
+      "label": "深圳供电局",
+      "province": "广东",
+      "cities": ["深圳"],
+      "has_tou": true,
+      "market_no_gov_tou": true,
+      "peak_yuan": 1.0879,
+      "flat_yuan": 0.7233,
+      "valley_yuan": 0.2640,
+      "spread_yuan": 0.8239,
+      "demand_yuan_per_kw_month": 48.0,
+      "capacity_yuan_per_kva_month": 22.0,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "10:00–12:00、14:00–19:00",
+      "valley_hours": "00:00–08:00",
+      "ratio": "工商业峰平谷比价维持深圳现行；尖峰在峰上浮25%（7–9月）",
+      "price_anchor": "2026-04 深圳供电局代购表 · 101–3000kVA · 10kV 高供低计一档",
+      "price_confidence": "仅「有强制分时」的代理购电工业用户可用。普通商业多为平期。锚仍是2026-04表；9月表请在南网在线截图。",
+      "source": "深圳供电局2026年4月代理购电价格；深发改〔2021〕1005号；粤 2026-05 征求意见同步覆盖深圳供电局区域；1656号",
+      "agent": {
+        "user_label": "代理购电：大量/高需求工商业、普通工业专变",
+        "form_label": "政府核定固定峰谷",
+        "marker": "【政策即将变动需复核】",
+        "pending_detail": "与省网同一份 2026-05 征求意见（午间谷、入市不再执行政府分时），未印发。",
+        "usable_for_spread": true
+      },
+      "agent_extra": {
+        "user_label": "代理购电：普通商业及其他（非工业）",
+        "form_label": "多为平期，不强制分时",
+        "marker": "",
+        "usable_for_spread": false
+      },
+      "market": {
+        "user_label": "已直接入市 / 售电零售",
+        "form_label": "市场化动态分时",
+        "marker": "⭐",
+        "usable_for_spread": false
+      }
+    },
+    {
+      "id": "shandong",
+      "label": "山东",
+      "province": "山东",
+      "cities": ["济南", "青岛", "烟台", "潍坊", "临沂", "淄博", "济宁", "泰安", "威海", "德州", "聊城", "滨州", "菏泽", "枣庄", "东营", "日照"],
+      "has_tou": true,
+      "market_no_gov_tou": true,
+      "peak_yuan": 1.3341,
+      "flat_yuan": 0.9588,
+      "valley_yuan": 0.5836,
+      "spread_yuan": 0.7505,
+      "demand_yuan_per_kw_month": 38.4,
+      "capacity_yuan_per_kva_month": 24.0,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "至2026-09-30（9–11月，914号）：16:00–21:00（尖峰17:00–19:00）。2026-10-01起：16:00–22:00（尖峰17:00–20:00）。全年四季见国网山东公告。",
+      "valley_hours": "至2026-09-30（9–11月）：10:00–15:00（深谷11:00–14:00）。2026-10-01起：09:00–15:00（深谷11:00–14:00）。",
+      "ratio": "峰+70%、谷-70%、尖峰+100%、深谷-90%",
+      "price_anchor": "度电仍锚 2025-11 两部制 10kV 代购表（2026-09 用户侧表未下到）；时段按 68 号+国网山东 10-01 公告",
+      "price_confidence": "时段官方。度电须对 2026-09 代购表。10-01 换时段后上会必须用新表。",
+      "source": "鲁发改价格〔2023〕914号；鲁发改价格函〔2026〕68号（2026-09-07）；国网山东时段调整（齐鲁网/新黄河 2026-09-10 转述官方）：10-01起四季时段；1656号。已签固定分时零售套餐合同期内可继续",
+      "agent": {
+        "user_label": "电网代理购电工商业",
+        "form_label": "政府核定固定峰谷（季节时段）",
+        "marker": "【政策即将变动需复核】",
+        "pending_detail": "2026-10-01 起执行新峰谷时段（68号已公告）。",
+        "usable_for_spread": true
+      },
+      "market": {
+        "user_label": "已直接入市 / 售电零售",
+        "form_label": "市场化动态分时（现货已转正）；固定分时套餐仅合同期内有效",
+        "marker": "⭐",
+        "usable_for_spread": false
+      }
+    },
+    {
+      "id": "jiangsu",
+      "label": "江苏",
+      "province": "江苏",
+      "cities": ["南京", "苏州", "无锡", "常州", "南通", "徐州", "扬州", "盐城", "泰州", "镇江", "淮安", "连云港", "宿迁"],
+      "has_tou": true,
+      "market_no_gov_tou": true,
+      "peak_yuan": 0.9571,
+      "flat_yuan": 0.6397,
+      "valley_yuan": 0.3818,
+      "spread_yuan": 0.5753,
+      "demand_yuan_per_kw_month": 51.2,
+      "capacity_yuan_per_kva_month": 32.0,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "2026-09（春秋）：15:00–22:00。夏冬（6–8月、12月–次年2月）：14:00–22:00。315kVA及以上工业另有尖峰。",
+      "valley_hours": "2026-09（春秋）：02:00–06:00、10:00–14:00。夏冬：00:00–06:00、11:00–13:00。",
+      "ratio": "两部制以购电价为平段：峰+80%、谷-65%；315kVA及以上工业尖峰在峰上再+20%、深谷在谷上再-20%（苏发改价格发〔2025〕426号）",
+      "price_anchor": "2026-09 国网江苏代购表 · 两部制 1–10kV",
+      "price_confidence": "代理购电已对官方9月表。入市原则上不再人为规定分时，须对手头零售合同。",
+      "source": "国网江苏《关于2026年9月代理购电工商业用户电价的公告》（镇江栏同步：http://www.js.sgcc.com.cn/xxgk/gwzjgdgs/djhsfbz/2026/14162.shtml ，PDF/图已落 ref/tariffs/js_202609）；苏发改价格发〔2025〕426号；《江苏省电力中长期市场实施细则（2026版）》；1656号",
+      "agent": {
+        "user_label": "电网代理购电工商业",
+        "form_label": "政府核定固定峰谷",
+        "marker": "【政策即将变动需复核】",
+        "pending_detail": "2026 版中长期细则要求按现货优化代购峰谷。9月表可用；换月必须换表。",
+        "usable_for_spread": true
+      },
+      "market": {
+        "user_label": "已直接入市 / 售电零售",
+        "form_label": "市场化动态分时（原则上不再人为规定）",
+        "marker": "⭐",
+        "usable_for_spread": false
+      }
+    },
+    {
+      "id": "shanghai",
+      "label": "上海",
+      "province": "上海",
+      "cities": ["上海"],
+      "has_tou": true,
+      "market_no_gov_tou": false,
+      "peak_yuan": 1.28,
+      "flat_yuan": 0.75,
+      "valley_yuan": 0.26,
+      "spread_yuan": 1.02,
+      "demand_yuan_per_kw_month": 42.0,
+      "capacity_yuan_per_kva_month": 28.0,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "两部制·夏季7–9月：08:00–15:00、18:00–21:00（7–8月尖峰12:00–14:00）。其他月：08:00–11:00、18:00–21:00（1、12月尖峰19:00–21:00）。",
+      "valley_hours": "两部制：22:00–次日06:00（沪发改价管〔2022〕50号）",
+      "ratio": "两部制夏冬（7–9月及1、12月）峰+80%、谷-60%，尖峰在峰上再+25%；其他月峰+60%、谷-50%",
+      "price_anchor": "时段/浮动官方（50号）。度电须对当月市电力公司代购表（网上国网，月末前3日公示）",
+      "price_confidence": "时段官方。度电未对上2026-09官方用户侧表，上会必须换表。",
+      "source": "沪发改价管〔2022〕50号；沪发改价管〔2025〕31号（代理购电，2025-10-01施行，https://fgw.sh.gov.cn/fgw_jggl/20250818/67b140dd1dc04310b5517520013d2aab.html）；《2026年本市电力中长期合同签约履约工作方案》；1656号",
+      "agent": {
+        "user_label": "电网代理购电工商业",
+        "form_label": "政府核定固定峰谷",
+        "marker": "",
+        "usable_for_spread": true
+      },
+      "market": {
+        "user_label": "已直接入市（中长期）",
+        "form_label": "暂继续用网侧固定分时（过渡，不是动态现货零售）",
+        "marker": "【政策即将变动需复核】",
+        "pending_detail": "2026 工作方案写「暂继续」。国家 1656 号已要求入市不再人为规定分时，上海细则若改、立刻停用库内价差。",
+        "usable_for_spread": true
+      }
+    },
+    {
+      "id": "anhui",
+      "label": "安徽",
+      "province": "安徽",
+      "cities": ["合肥", "芜湖", "蚌埠", "淮南", "马鞍山", "淮北", "铜陵", "安庆", "黄山", "滁州", "阜阳", "宿州", "六安", "亳州", "池州", "宣城"],
+      "has_tou": true,
+      "market_no_gov_tou": true,
+      "peak_yuan": 1.12,
+      "flat_yuan": 0.64,
+      "valley_yuan": 0.24,
+      "spread_yuan": 0.88,
+      "demand_yuan_per_kw_month": 32.0,
+      "capacity_yuan_per_kva_month": 22.0,
+      "two_part_typical": true,
+      "demand_waiver_42": true,
+      "peak_hours": "春秋：06–08、16–22；夏：16–24；冬：15–23（皖发改价格〔2025〕302号，2025-07-01起）",
+      "valley_hours": "春秋：11–14、23–次日06；夏：02–09、11–13；冬：12–14、23–次日06",
+      "ratio": "谷-61.8%；夏冬月峰+84.3%，春秋峰+74%",
+      "price_anchor": "时段/浮动官方；度电按浮动比例在代购平段上估算",
+      "price_confidence": "时段/浮动官方（302号）。度电为估算，2026-09 官方表已发布但附件下不到，须对 PDF。",
+      "source": "皖发改价格〔2025〕302号；国网安徽2026年9月代购公告入口：https://whfgw.wuhu.gov.cn/fgyw/tzgg/8952921.html 、https://www.luan.gov.cn/mslyfw/gysy/gdfw/ydjg/10786488.html ；1656号",
+      "agent": {
+        "user_label": "电网代理购电工商业（≥100kVA 强制分时）",
+        "form_label": "政府核定固定峰谷",
+        "marker": "",
+        "usable_for_spread": true
+      },
+      "market": {
+        "user_label": "已直接入市 / 售电零售",
+        "form_label": "国家规则要求市场化分时；省内细则待核",
+        "marker": "⭐【政策即将变动需复核】",
+        "pending_detail": "1656 号已施行，但检索未见安徽入市取消固定分时的省发改细则全文。不可用库内峰谷做保底。",
+        "usable_for_spread": false
+      }
+    }
+  ]
+}
